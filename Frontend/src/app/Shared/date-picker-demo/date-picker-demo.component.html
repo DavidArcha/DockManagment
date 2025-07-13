@@ -1,3 +1,166 @@
-<app-custom-date-picker [dateFormat]="'dd-mm-yyyy'" [initialDate]="'13-07-2025'" [minDate]="min" [maxDate]="max"
-  [enableDateRangeSelection]="false" [showTimePicker]="false" [language]="'en'" (selectedDate)="onSelectedDate($event)"
-  (opened)="onOpened()" (closed)="onClosed()"></app-custom-date-picker>
+<div class="demo-container">
+  <h2>Custom Date Picker Demo</h2>
+
+  <!-- Basic Usage Section -->
+  <section class="demo-section">
+    <h3>Basic Date Picker</h3>
+    <p class="instruction">Simple date picker with default settings</p>
+    <app-custom-date-picker 
+      (selectedDate)="onSelectedDate($event, 'basic')"
+      (opened)="onOpened('basic')"
+      (closed)="onClosed('basic')">
+    </app-custom-date-picker>
+    <p>Selected: {{selectedValues['basic'] || 'None'}}</p>
+  </section>
+
+  <!-- Date Format Options -->
+  <section class="demo-section">
+    <h3>Date Format Options</h3>
+    
+    <p class="instruction">Format: dd-mm-yyyy (default)</p>
+    <app-custom-date-picker 
+      [dateFormat]="'dd-mm-yyyy'"
+      (selectedDate)="onSelectedDate($event, 'format1')">
+    </app-custom-date-picker>
+    
+    <p class="instruction">Format: dd/mm/yyyy</p>
+    <app-custom-date-picker 
+      [dateFormat]="'dd/mm/yyyy'"
+      (selectedDate)="onSelectedDate($event, 'format2')">
+    </app-custom-date-picker>
+    
+    <p class="instruction">Format: mm-dd-yyyy</p>
+    <app-custom-date-picker 
+      [dateFormat]="'mm-dd-yyyy'"
+      (selectedDate)="onSelectedDate($event, 'format3')">
+    </app-custom-date-picker>
+  </section>
+
+  <!-- Initial Value -->
+  <section class="demo-section">
+    <h3>Initial Date Values</h3>
+    
+    <p class="instruction">Initial date as string: '13-07-2025'</p>
+    <app-custom-date-picker 
+      [initialDate]="'13-07-2025'"
+      (selectedDate)="onSelectedDate($event, 'initial1')">
+    </app-custom-date-picker>
+    
+    <p class="instruction">Initial date as Date object</p>
+    <app-custom-date-picker 
+      [initialDate]="initialDateObject"
+      (selectedDate)="onSelectedDate($event, 'initial2')">
+    </app-custom-date-picker>
+  </section>
+
+  <!-- Range Selection -->
+  <section class="demo-section">
+    <h3>Date Range Selection</h3>
+    
+    <p class="instruction">Select a start and end date</p>
+    <app-custom-date-picker 
+      [enableDateRangeSelection]="true"
+      (selectedDate)="onSelectedDate($event, 'range')">
+    </app-custom-date-picker>
+    <p>Selected Range: {{selectedValues['range'] || 'None'}}</p>
+  </section>
+
+  <!-- Time Picker -->
+  <section class="demo-section">
+    <h3>Date & Time Selection</h3>
+    
+    <p class="instruction">Date with time picker</p>
+    <app-custom-date-picker 
+      [showTimePicker]="true"
+      (selectedDate)="onSelectedDate($event, 'time')">
+    </app-custom-date-picker>
+    <p>Selected DateTime: {{selectedValues['time'] || 'None'}}</p>
+  </section>
+
+  <!-- Date Constraints -->
+  <section class="demo-section">
+    <h3>Date Constraints</h3>
+    
+    <p class="instruction">Min/Max dates (2020-2030)</p>
+    <app-custom-date-picker 
+      [minDate]="min"
+      [maxDate]="max"
+      (selectedDate)="onSelectedDate($event, 'minmax')">
+    </app-custom-date-picker>
+    
+    <p class="instruction">Weekend dates disabled</p>
+    <app-custom-date-picker 
+      [disableWeekends]="true"
+      (selectedDate)="onSelectedDate($event, 'weekends')">
+    </app-custom-date-picker>
+    
+    <p class="instruction">Future dates restricted</p>
+    <app-custom-date-picker 
+      [restrictFutureDates]="true"
+      (selectedDate)="onSelectedDate($event, 'future')">
+    </app-custom-date-picker>
+  </section>
+
+  <!-- Localization -->
+  <section class="demo-section">
+    <h3>Language Support</h3>
+    
+    <p class="instruction">English (default)</p>
+    <app-custom-date-picker 
+      [language]="'en'"
+      (selectedDate)="onSelectedDate($event, 'lang1')">
+    </app-custom-date-picker>
+    
+    <p class="instruction">German</p>
+    <app-custom-date-picker 
+      [language]="'de'"
+      (selectedDate)="onSelectedDate($event, 'lang2')">
+    </app-custom-date-picker>
+  </section>
+
+  <!-- Error Messaging -->
+  <section class="demo-section">
+    <h3>Custom Error Message</h3>
+    
+    <p class="instruction">Try entering an invalid date to see the custom error</p>
+    <app-custom-date-picker 
+      [customErrorMessage]="'Please enter a valid date in the correct format'"
+      (selectedDate)="onSelectedDate($event, 'error')">
+    </app-custom-date-picker>
+  </section>
+
+  <!-- Popup Behavior -->
+  <section class="demo-section">
+    <h3>Popup Behavior</h3>
+    
+    <p class="instruction">Stay open after selection (closeOnSelect=false)</p>
+    <app-custom-date-picker 
+      [closeOnSelect]="false"
+      (selectedDate)="onSelectedDate($event, 'popup')">
+    </app-custom-date-picker>
+  </section>
+
+  <!-- Combined Features -->
+  <section class="demo-section">
+    <h3>Combined Features</h3>
+    
+    <p class="instruction">Range + Time + Constraints</p>
+    <app-custom-date-picker 
+      [enableDateRangeSelection]="true"
+      [showTimePicker]="true"
+      [minDate]="min"
+      [maxDate]="max"
+      [language]="'en'"
+      (selectedDate)="onSelectedDate($event, 'combined')">
+    </app-custom-date-picker>
+    <p>Selected: {{selectedValues['combined'] || 'None'}}</p>
+  </section>
+
+  <!-- Event Logging -->
+  <div class="event-log">
+    <h3>Event Log</h3>
+    <div *ngFor="let log of eventLogs" class="log-entry">
+      {{log}}
+    </div>
+  </div>
+</div>
