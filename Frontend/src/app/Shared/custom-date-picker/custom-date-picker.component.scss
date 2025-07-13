@@ -113,32 +113,35 @@
             border-radius: 4px;
             cursor: pointer;
             transition: background 0.1s;
+            color: #222; // default text color for current month days
+            background: none;
+            cursor: pointer; // Default color for current month
 
             &.other-month {
-                color: #ccc;
-                background: #fafafa;
+                color: #bbb !important; // gray color for other months (override if necessary)
+                cursor: default;
             }
 
             &.disabled {
-                color: #bbb;
+                color: #ddd !important;
                 pointer-events: none;
-                background: #f7f7f7;
             }
 
             &.today {
-                border: 1px solid #1976d2;
+                border: 1px solid #2196f3;
+                font-weight: bold;
             }
 
             &.selected {
-                background: #1976d2;
-                color: #fff;
+                background: #2196f3;
+                color: #fff !important;
             }
 
             &.in-range {
                 background: #e3f2fd;
             }
 
-            &:hover:not(.disabled):not(.selected) {
+            &:hover:not(.disabled):not(.selected):not(.other-month) {
                 background: #e3f2fd;
             }
 

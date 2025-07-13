@@ -174,34 +174,57 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     this.viewYear = d.getFullYear();
   }
 
-  // Calendar builder
   buildCalendar() {
+
     const weeks: any[][] = [];
+
+    // Create a date for the first day of the current viewing month
     const firstOfMonth = new Date(this.viewYear, this.viewMonth, 1);
-    const startDay = firstOfMonth.getDay(); // 0 (Sun) .. 6 (Sat)
-    let current = new Date(this.viewYear, this.viewMonth, 1 - startDay);
-    
+
+    // Get the day of the week for the first day (0 = Sunday, 1 = Monday, etc.)
+    const firstDayOfWeek = firstOfMonth.getDay();
+
+    // Calculate how many days to show from the previous month
+    const daysFromPrevMonth = firstDayOfWeek;
+
+    // Start from the first cell date (could be from previous month)
+    const startDate = new Date(this.viewYear, this.viewMonth, 1 - daysFromPrevMonth);
+
     for (let w = 0; w < 6; w++) {
       const week: any[] = [];
       for (let d = 0; d < 7; d++) {
-        const currentDate = new Date(current);
-        const isOtherMonth = current.getMonth() !== this.viewMonth;
-        
+        // CREATE DATE CORRECTLY: Use a clean new Date object for each cell
+        const dayOffset = w * 7 + d;
+
+        // Create a completely fresh date for each cell
+        const tempDate = new Date(startDate);
+        tempDate.setDate(startDate.getDate() + dayOffset);
+        // Create a fresh date to avoid mutation issues
+        const currentCellDate = new Date(
+          tempDate.getFullYear(),
+          tempDate.getMonth(),
+          tempDate.getDate()
+        );
+
+        // Check if this date belongs to current viewing month
+        const isOtherMonth = currentCellDate.getMonth() !== this.viewMonth;
+
         week.push({
-          date: currentDate,
-          label: current.getDate(),
+          date: new Date(currentCellDate),
+          label: currentCellDate.getDate(),
           isOtherMonth,
-          isToday: this.isSameDay(current, new Date()),
-          isSelected: this.isSelectedDay(current),
-          isInRange: this.isInRange(current),
-          disabled: !this.isDateEnabled(currentDate) // Pass the date copy to avoid issues
+          isToday: this.isSameDay(currentCellDate, new Date()),
+          isSelected: this.isSelectedDay(currentCellDate),
+          isInRange: this.isInRange(currentCellDate),
+          disabled: !this.isDateEnabled(currentCellDate)
         });
-        current.setDate(current.getDate() + 1);
       }
       weeks.push(week);
     }
+
     this.calendarWeeks = weeks;
   }
+
 
   prevMonth() {
     if (this.viewMonth === 0) {
@@ -222,7 +245,17 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     this.buildCalendar();
   }
   changeMonth(m: number) {
-    this.viewMonth = m;
+    // Convert the value to a number explicitly (dropdown might return string)
+    this.viewMonth = parseInt(m.toString(), 10);
+
+    // Fix: Use numeric values in comparisons
+    if (this.viewMonth === 11 && m === 0) {
+      this.viewYear--;
+    } else if (this.viewMonth === 0 && m === 11) {
+      this.viewYear++;
+    }
+
+    // Rebuild the calendar with the new month
     this.buildCalendar();
   }
   changeYear(y: number) {
@@ -363,7 +396,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     if (!d || !(d instanceof Date) || isNaN(d.getTime())) {
       return false;
     }
-    
+
     if (this.minDate && d < this.stripTime(this.minDate)) return false;
     if (this.maxDate && d > this.stripTime(this.maxDate)) return false;
     if (this.restrictFutureDates && d > this.stripTime(new Date())) return false;
@@ -455,10 +488,10 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   // Month/Year dropdown arrays
-  get months(): string[] { 
+  get months(): string[] {
     return MONTHS[this.language] || MONTHS['en'] || [];
   }
-  get days(): string[] { 
+  get days(): string[] {
     return DAYS[this.language] || DAYS['en'] || [];
   }
   get years(): number[] {
@@ -467,10 +500,10 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       let minY = this.minDate ? this.minDate.getFullYear() : now.getFullYear() - 100;
       let maxY = this.maxDate ? this.maxDate.getFullYear() : now.getFullYear() + 20;
       if (this.restrictFutureDates && maxY > now.getFullYear()) maxY = now.getFullYear();
-      
+
       const res: number[] = [];
       for (let y = minY; y <= maxY; y++) res.push(y);
-      
+
       // Ensure we always return a valid array with at least one year
       return res.length > 0 ? res : [now.getFullYear()];
     } catch (error) {
