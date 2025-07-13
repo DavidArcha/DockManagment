@@ -44,7 +44,7 @@
           <input type="checkbox" id="enable-format" 
                  [(ngModel)]="enableFormatChange" 
                  (change)="toggleFormatChange()" />
-          <label for="enable-format">Change Date Format:</label>
+          <label for="enable-format">{{ language === 'de' ? 'Datumsformat ändern:' : 'Change Date Format:' }}</label>
         </div>
         
         <div *ngIf="enableFormatChange" class="cdp-format-dropdown">
@@ -57,12 +57,12 @@
       </div>
       
       <div class="cdp-settings-section">
-        <div class="cdp-settings-title">Time Options</div>
+        <div class="cdp-settings-title">{{ language === 'de' ? 'Zeitoptionen' : 'Time Options' }}</div>
         <div class="cdp-checkbox-wrap">
           <input type="checkbox" id="show-time" 
                  [(ngModel)]="showTimeOption" 
                  (change)="toggleTimeDisplay()" />
-          <label for="show-time">Display Time</label>
+          <label for="show-time">{{ language === 'de' ? 'Zeit anzeigen' : 'Display Time' }}</label>
         </div>
         
         <div *ngIf="showTimeOption" class="cdp-time-format-options">
@@ -70,13 +70,13 @@
             <input type="radio" id="24hr-format" name="timeFormat" 
                   [checked]="timeFormatOption === '24hr'"
                   (change)="setTimeFormat('24hr')" />
-            <label for="24hr-format">24 Hours</label>
+            <label for="24hr-format">{{ language === 'de' ? '24 Stunden' : '24 Hours' }}</label>
           </div>
           <div class="cdp-radio-wrap">
             <input type="radio" id="12hr-format" name="timeFormat"
                   [checked]="timeFormatOption === '12hr'"
                   (change)="setTimeFormat('12hr')" />
-            <label for="12hr-format">AM/PM</label>
+            <label for="12hr-format">{{ language === 'de' ? 'AM/PM' : 'AM/PM' }}</label>
           </div>
         </div>
       </div>

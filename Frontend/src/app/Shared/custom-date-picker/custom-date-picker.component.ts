@@ -44,7 +44,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   @Input() disableWeekends = false;
   @Input() restrictFutureDates = false;
   @Input() closeOnSelect = true;
-  @Input() language: 'en' | 'de' = 'en';
+  @Input() language: 'en' | 'de' = 'de';
   @Input() customErrorMessage: string | null = null;
   @Output() selectedDate = new EventEmitter<DateOrRange>();
   @Output() opened = new EventEmitter<void>();
