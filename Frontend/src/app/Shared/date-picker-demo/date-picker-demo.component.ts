@@ -124,4 +124,29 @@ export class DatePickerDemoComponent {
     // Call the existing method with a default source
     this.onSelectedDate(date, 'format1');
   }
+
+  // Add these properties to your component class
+  formattedMatchingDate: string = '15-/07/2025';
+  formattedMismatchDate: string = '15/07/2025';
+  selectedMismatchDate: string = '';
+
+  // Add these methods
+  setMatchingDateFormat() {
+    // Get current date and format it as dd-mm-yyyy
+    const today = new Date();
+    this.formattedMatchingDate = `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getFullYear()}`;
+    console.log('Setting matching date format:', this.formattedMatchingDate);
+  }
+
+  setMismatchDateFormat() {
+    // Get current date and format it with intentional mismatch (dd/mm/yyyy)
+    const today = new Date();
+    this.formattedMismatchDate = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+    console.log('Setting mismatched date format:', this.formattedMismatchDate);
+  }
+
+  onFormattedDateWithMismatch(dateStr: string) {
+    this.selectedMismatchDate = dateStr;
+    console.log('Formatted date after mismatch handling:', dateStr);
+  }
 }

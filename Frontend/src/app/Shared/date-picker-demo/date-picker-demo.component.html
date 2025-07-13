@@ -121,6 +121,27 @@
     <p>Selected: {{selectedValues['combined'] || 'None'}}</p>
   </section>
 
+  <!-- New Section: Passing Dates from Parent Component -->
+  <section class="demo-section">
+    <h3>Passing Dates from Parent Component</h3>
+
+    <p class="instruction">Set date programmatically (with matching format)</p>
+    <app-custom-date-picker [dateFormat]="'dd-mm-yyyy'" [initialDate]="formattedMatchingDate"
+      (formattedDateStr)="onFormattedDate($event)">
+    </app-custom-date-picker>
+
+    <p class="instruction">Format mismatch example (dd/mm/yyyy value with dd-mm-yyyy format)</p>
+    <app-custom-date-picker [dateFormat]="'dd-mm-yyyy'" [initialDate]="formattedMismatchDate"
+      (formattedDateStr)="onFormattedDateWithMismatch($event)">
+    </app-custom-date-picker>
+    <p>Selected with mismatch: {{selectedMismatchDate || 'None'}}</p>
+
+    <div class="demo-buttons">
+      <button (click)="setMatchingDateFormat()">Set Date (Matching Format)</button>
+      <button (click)="setMismatchDateFormat()">Set Date (Mismatched Format)</button>
+    </div>
+  </section>
+
   <!-- Event Logging -->
   <div class="event-log">
     <h3>Event Log</h3>
@@ -128,4 +149,7 @@
       {{log}}
     </div>
   </div>
+  <app-custom-date-picker [dateFormat]="'dd-mm-yyyy'" [initialDate]="'14/07/2025'">
+    <!-- The component will handle the mismatch internally -->
+  </app-custom-date-picker>
 </div>
