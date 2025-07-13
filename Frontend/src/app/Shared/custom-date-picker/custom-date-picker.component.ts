@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-custom-date-picker',
@@ -26,7 +26,7 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
   @Output() opened = new EventEmitter<void>();
   @Output() closed = new EventEmitter<void>();
 
-  inputId = `cdp-input-${Math.floor(Math.random()*100000)}`;
+  inputId = `cdp-input-${Math.floor(Math.random() * 100000)}`;
   isOpen = false;
   popupMinWidth = 280;
   hasError = false;
@@ -53,7 +53,7 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
 
   private clickUnlisten: ((e: any) => void) | null = null;
 
-  constructor() {
+  constructor(private cdr: ChangeDetectorRef) {
     // Defaults
     const today = new Date();
     this.visibleYear = today.getFullYear();
@@ -70,7 +70,6 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
     this.removeClickListener();
   }
 
-  // Locale, ARIA, etc.
   setLocale() {
     if (this.language === 'de') {
       this.monthList = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
@@ -85,8 +84,9 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
       this.clearLabel = 'Clear';
       this.ariaInputLabel = 'Date picker input';
     }
-    this.yearList = Array.from({length: 21}, (_, i) => this.visibleYear - 10 + i);
+    this.refreshYearList();
   }
+
   setPlaceholder() {
     switch (this.dateFormat) {
       case 'dd-mm-yyyy': this.displayPlaceholder = '__-__-____'; break;
@@ -110,6 +110,8 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
         this.selectedHour = date.getHours();
         this.selectedMinute = date.getMinutes();
       }
+      this.refreshYearList();
+      this.initCalendar();
     }
   }
 
@@ -149,7 +151,6 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
 
   onInputChange(val: string) {
     this.displayValue = val;
-    // Validate as you type (simple/extendable)
     const parsed = this.parseDateStr(val);
     if (parsed && this.isSelectable(parsed)) {
       this.hasError = false;
@@ -159,6 +160,7 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
         this.selectedMinute = parsed.getMinutes();
       }
       this.selectedDate.emit(parsed);
+      this.initCalendar();
     } else {
       this.hasError = true;
       this.errorMessage = this.customErrorMessage || (this.language === 'de' ? 'Ungültiges Datum' : 'Invalid date');
@@ -196,6 +198,11 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
     if (this.selectedDateObj) this.displayValue = this.formatDisplay(this.selectedDateObj);
   }
 
+  onMonthOrYearChange() {
+    this.refreshYearList();
+    this.initCalendar();
+    this.cdr.detectChanges();
+  }
   prevMonth() {
     if (this.visibleMonth === 0) {
       this.visibleMonth = 11;
@@ -203,7 +210,9 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
     } else {
       this.visibleMonth--;
     }
+    this.refreshYearList();
     this.initCalendar();
+    this.cdr.detectChanges();
   }
   nextMonth() {
     if (this.visibleMonth === 11) {
@@ -212,10 +221,12 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
     } else {
       this.visibleMonth++;
     }
+    this.refreshYearList();
     this.initCalendar();
+    this.cdr.detectChanges();
   }
-  onMonthOrYearChange() {
-    this.initCalendar();
+  private refreshYearList() {
+    this.yearList = Array.from({ length: 21 }, (_, i) => this.visibleYear - 10 + i);
   }
 
   setToday() {
@@ -228,6 +239,7 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
       this.selectedHour = now.getHours();
       this.selectedMinute = now.getMinutes();
     }
+    this.refreshYearList();
     this.selectedDate.emit(now);
     this.hasError = false;
     this.closePopup();
@@ -240,38 +252,49 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
     this.initCalendar();
   }
 
-  // CALENDAR GENERATION
+  // --------- THE KEY FIXED CALENDAR CODE! ---------
   initCalendar() {
     const month = this.visibleMonth;
     const year = this.visibleYear;
-    const first = new Date(year, month, 1);
-    const last = new Date(year, month + 1, 0);
-    let startDay = first.getDay() - 1;
-    if (startDay < 0) startDay = 6; // Make Monday=0
-    let cur = new Date(year, month, 1 - startDay);
+
+    // First day of month
+    const firstDay = new Date(year, month, 1);
+    let dayOfWeek = firstDay.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const startDate = new Date(year, month, 1 - daysToMonday);
+
     this.calendarWeeks = [];
-    for (let w = 0; w < 6; w++) {
-      const week: any[] = [];
-      for (let d = 0; d < 7; d++) {
-        const date = new Date(cur);
-        const isToday = this.isSameDate(date, new Date());
-        const isSelected = this.selectedDateObj && this.isSameDate(date, this.selectedDateObj);
-        const isDisabled = this.isDisabled(date, month);
-        week.push({
-          label: date.getMonth() === month ? date.getDate() : '',
-          date,
+    for (let week = 0; week < 6; week++) {
+      const weekArray: any[] = [];
+      for (let day = 0; day < 7; day++) {
+        const dayOffset = week * 7 + day;
+        const currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + dayOffset);
+
+        const isCurrentMonth = currentDate.getMonth() === month;
+        const isToday = this.isSameDate(currentDate, new Date());
+        const isSelected = this.selectedDateObj && this.isSameDate(currentDate, this.selectedDateObj);
+
+        // The key fix:
+        // - Out-of-month days always disabled
+        // - In-month days only disabled by isDisabled()!
+        const isDisabled = !isCurrentMonth || this.isDisabled(currentDate);
+
+        weekArray.push({
+          label: currentDate.getDate().toString(),
+          date: new Date(currentDate),
           isToday,
           isSelected,
           disabled: isDisabled,
-          isFocusable: !isDisabled && date.getMonth() === month,
+          isCurrentMonth,
+          isFocusable: !isDisabled && isCurrentMonth,
+          inRange: false
         });
-        cur.setDate(cur.getDate() + 1);
       }
-      this.calendarWeeks.push(week);
+      this.calendarWeeks.push(weekArray);
     }
   }
-  isDisabled(date: Date, month: number) {
-    if (date.getMonth() !== month) return true;
+
+  isDisabled(date: Date): boolean {
     if (this.minDate) {
       const min = this.parseDateStr(this.minDate);
       if (min && date < min) return true;
@@ -284,8 +307,8 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
     if (this.restrictFutureDates && date > new Date()) return true;
     return false;
   }
-  isSelectable(date: Date) {
-    return !this.isDisabled(date, date.getMonth());
+  isSelectable(date: Date): boolean {
+    return !this.isDisabled(date);
   }
   isSameDate(a: Date, b: Date) {
     return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -315,7 +338,7 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
     else if (this.dateFormat === 'dd/mm/yyyy') formatted = `${dd}/${mm}/${yyyy}`;
     else if (this.dateFormat === 'mm-dd-yyyy') formatted = `${mm}-${dd}-${yyyy}`;
     if (this.showTimePicker)
-      formatted += ` ${('0'+date.getHours()).slice(-2)}:${('0'+date.getMinutes()).slice(-2)}`;
+      formatted += ` ${('0' + date.getHours()).slice(-2)}:${('0' + date.getMinutes()).slice(-2)}`;
     return formatted;
   }
 
@@ -332,11 +355,17 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
     return new Date(this.visibleYear, this.visibleMonth + 1, 1) > new Date(max.getFullYear(), max.getMonth(), 1);
   }
 
-  // Accessibility/Keyboard
   onComponentKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') this.closePopup();
   }
   onPopupKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') this.closePopup();
+  }
+
+  trackByWeek(index: number, week: any[]): any {
+    return index;
+  }
+  trackByDay(index: number, day: any): any {
+    return day.date.getTime();
   }
 }

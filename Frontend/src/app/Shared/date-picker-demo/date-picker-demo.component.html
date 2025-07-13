@@ -1,53 +1,5 @@
-<!-- date-picker-demo.component.html -->
-<h2>Date Picker Demo – All Possibilities</h2>
-
-<section>
-    <h3>1. Default (English, single date, dd-mm-yyyy)</h3>
-    <app-custom-date-picker [label]="'Birthdate'" [dateFormat]="'dd-mm-yyyy'"
-        (selectedDate)="onSelect('Default', $event)">
-    </app-custom-date-picker>
-</section>
-
-<section>
-    <h3>2. German Mode, With Time Picker</h3>
-    <app-custom-date-picker [label]="'Geburtsdatum und Zeit'" [language]="'de'" [dateFormat]="'dd/mm/yyyy'"
-        [showTimePicker]="true" [initialDate]="'20/07/2023 19:30'" (selectedDate)="onSelect('German-Time', $event)">
-    </app-custom-date-picker>
-</section>
-
-<section>
-    <h3>3. Range Selection (Min/Max, Restrict Future, Disable Weekends)</h3>
-    <app-custom-date-picker [label]="'Booking Window'" [enableDateRangeSelection]="true" [minDate]="'01-07-2024'"
-        [maxDate]="'20-07-2024'" [disableWeekends]="true" [restrictFutureDates]="true"
-        (selectedDate)="onSelect('Range', $event)">
-    </app-custom-date-picker>
-</section>
-
-<section>
-    <h3>4. US Format, Custom Error, Readonly/Disabled</h3>
-    <app-custom-date-picker [label]="'Event Date (readonly)'" [dateFormat]="'mm-dd-yyyy'" [initialDate]="'07-20-2023'"
-        [readonly]="true" [customErrorMessage]="'Please enter a valid date!'"
-        (selectedDate)="onSelect('Readonly', $event)">
-    </app-custom-date-picker>
-
-    <app-custom-date-picker [label]="'Event Date (disabled)'" [dateFormat]="'mm-dd-yyyy'" [initialDate]="'07-20-2023'"
-        [disabled]="true" (selectedDate)="onSelect('Disabled', $event)">
-    </app-custom-date-picker>
-</section>
-
-<section>
-    <h3>5. All Features at Once</h3>
-    <app-custom-date-picker [label]="'All Features'" [dateFormat]="'dd-mm-yyyy'" [showTimePicker]="true"
-        [language]="'en'" [initialDate]="'12-07-2024 12:30'" [minDate]="'01-07-2024'" [maxDate]="'30-07-2024'"
-        [disableWeekends]="true" [restrictFutureDates]="true" [customErrorMessage]="'Oops! Not allowed.'"
-        [closeOnSelect]="false" (selectedDate)="onSelect('AllFeatures', $event)" (opened)="onOpened('AllFeatures')"
-        (closed)="onClosed('AllFeatures')">
-    </app-custom-date-picker>
-</section>
-
-<section>
-    <h3>Event Log</h3>
-    <div style="background:#f7f7f7;padding:8px;max-height:200px;overflow:auto;font-size:14px;">
-        <div *ngFor="let log of eventLog">{{ log }}</div>
-    </div>
-</section>
+<!-- Basic usage -->
+<app-custom-calender
+  [dateFormat]="'dd-mm-yyyy'"
+  [language]="'en'">
+</app-custom-calender>

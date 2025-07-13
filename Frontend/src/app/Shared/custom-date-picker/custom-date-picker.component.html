@@ -2,30 +2,28 @@
 <div class="cdp-root" [class.cdp-open]="isOpen" tabindex="-1" (keydown)="onComponentKeydown($event)">
   <label [attr.for]="inputId" class="cdp-label">{{ label }}</label>
   <div class="cdp-input-wrapper" [class.cdp-invalid]="hasError">
-    <input
-      #dateInput
-      [id]="inputId"
-      class="cdp-input"
-      type="text"
-      [placeholder]="displayPlaceholder"
-      [value]="displayValue"
-      (focus)="openPopup()"
-      (click)="openPopup()"
-      (input)="onInputChange(dateInput.value)"
-      (blur)="onInputBlur()"
-      [attr.aria-label]="ariaInputLabel"
-      [attr.aria-invalid]="hasError"
-      [readonly]="readonly"
-      autocomplete="off"
-      [disabled]="disabled"
-    />
+    <input #dateInput [id]="inputId" class="cdp-input" type="text" [placeholder]="displayPlaceholder"
+      [value]="displayValue" (focus)="openPopup()" (click)="openPopup()" (input)="onInputChange(dateInput.value)"
+      (blur)="onInputBlur()" [attr.aria-label]="ariaInputLabel" [attr.aria-invalid]="hasError" [readonly]="readonly"
+      autocomplete="off" [disabled]="disabled" />
     <button *ngIf="displayValue" class="cdp-clear-btn" type="button" tabindex="-1" aria-label="Clear" (click)="clear()">
       <!-- Red close SVG -->
-      <svg width="20" height="20" viewBox="0 0 20 20" focusable="false"><circle cx="10" cy="10" r="10" fill="#F55" /><path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg width="20" height="20" viewBox="0 0 20 20" focusable="false">
+        <circle cx="10" cy="10" r="10" fill="#F55" />
+        <path d="M7 7l6 6M13 7l-6 6" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+      </svg>
     </button>
-    <button class="cdp-calendar-btn" type="button" tabindex="-1" aria-label="Open calendar" (click)="togglePopup($event)">
+    <button class="cdp-calendar-btn" type="button" tabindex="-1" aria-label="Open calendar"
+      (click)="togglePopup($event)">
       <!-- Calendar SVG icon -->
-      <svg width="20" height="20" viewBox="0 0 20 20" focusable="false"><rect x="3" y="6" width="14" height="11" rx="2" fill="#EEE"/><rect x="6" y="1" width="2" height="4" rx="1" fill="#888"/><rect x="12" y="1" width="2" height="4" rx="1" fill="#888"/><rect x="6" y="10" width="2" height="2" rx="1" fill="#888"/><rect x="10" y="10" width="2" height="2" rx="1" fill="#888"/><rect x="14" y="10" width="2" height="2" rx="1" fill="#888"/></svg>
+      <svg width="20" height="20" viewBox="0 0 20 20" focusable="false">
+        <rect x="3" y="6" width="14" height="11" rx="2" fill="#EEE" />
+        <rect x="6" y="1" width="2" height="4" rx="1" fill="#888" />
+        <rect x="12" y="1" width="2" height="4" rx="1" fill="#888" />
+        <rect x="6" y="10" width="2" height="2" rx="1" fill="#888" />
+        <rect x="10" y="10" width="2" height="2" rx="1" fill="#888" />
+        <rect x="14" y="10" width="2" height="2" rx="1" fill="#888" />
+      </svg>
     </button>
   </div>
   <div *ngIf="hasError" class="cdp-error-msg" role="alert">
@@ -33,17 +31,26 @@
   </div>
 
   <!-- Calendar popup -->
-  <div *ngIf="isOpen" class="cdp-popup" [style.minWidth.px]="popupMinWidth" tabindex="-1" (keydown)="onPopupKeydown($event)">
+  <div *ngIf="isOpen" class="cdp-popup" [style.minWidth.px]="popupMinWidth" tabindex="-1"
+    (keydown)="onPopupKeydown($event)">
     <div class="cdp-popup-header">
-      <button class="cdp-nav-btn" type="button" aria-label="Previous month" (click)="prevMonth()" [disabled]="isPrevMonthDisabled()">&lt;</button>
+      <button class="cdp-nav-btn" type="button" aria-label="Previous month" (click)="prevMonth()"
+        [disabled]="isPrevMonthDisabled()">&lt;</button>
       <select class="cdp-month-select" [(ngModel)]="visibleMonth" (change)="onMonthOrYearChange()">
         <option *ngFor="let m of monthList; let i = index" [value]="i">{{ m }}</option>
       </select>
       <select class="cdp-year-select" [(ngModel)]="visibleYear" (change)="onMonthOrYearChange()">
         <option *ngFor="let y of yearList" [value]="y">{{ y }}</option>
       </select>
-      <button class="cdp-nav-btn" type="button" aria-label="Next month" (click)="nextMonth()" [disabled]="isNextMonthDisabled()">&gt;</button>
+      <button class="cdp-nav-btn" type="button" aria-label="Next month" (click)="nextMonth()"
+        [disabled]="isNextMonthDisabled()">&gt;</button>
     </div>
+
+    <!-- Debug info - remove in production -->
+    <div *ngIf="isOpen" style="background: yellow; padding: 5px; margin: 5px;">
+      DEBUG: Month={{visibleMonth}} Year={{visibleYear}} Weeks={{calendarWeeks.length}}
+    </div>
+
     <table class="cdp-calendar-table" aria-label="Calendar" role="grid">
       <thead>
         <tr>
@@ -51,24 +58,23 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let week of calendarWeeks">
-          <td *ngFor="let day of week"
-              [class.cdp-today]="day.isToday"
-              [class.cdp-selected]="day.isSelected"
-              [class.cdp-range]="day.inRange"
-              [class.cdp-disabled]="day.disabled"
-              (click)="onDayClick(day)"
-              [attr.aria-selected]="day.isSelected ? 'true' : null"
-              [attr.tabindex]="day.isFocusable ? '0' : '-1'">
+        <tr *ngFor="let week of calendarWeeks; trackBy: trackByWeek">
+          <td *ngFor="let day of week; trackBy: trackByDay" [class.cdp-today]="day.isToday"
+            [class.cdp-selected]="day.isSelected" [class.cdp-range]="day.inRange" [class.cdp-disabled]="day.disabled"
+            [class.cdp-outmonth]="!day.isCurrentMonth" (click)="onDayClick(day)"
+            [attr.aria-selected]="day.isSelected ? 'true' : null" [attr.tabindex]="day.isFocusable ? '0' : '-1'">
             {{ day.label }}
           </td>
+
         </tr>
       </tbody>
     </table>
     <!-- Time picker, only in single-date mode -->
     <div *ngIf="showTimePicker && !enableDateRangeSelection" class="cdp-time-picker">
-      <input #hourInput class="cdp-time-hour" type="number" min="0" max="23" [value]="selectedHour" (change)="onHourChange(hourInput.value)" aria-label="Hour" /> :
-      <input #minuteInput class="cdp-time-minute" type="number" min="0" max="59" [value]="selectedMinute" (change)="onMinuteChange(minuteInput.value)" aria-label="Minute" />
+      <input #hourInput class="cdp-time-hour" type="number" min="0" max="23" [value]="selectedHour"
+        (change)="onHourChange(hourInput.value)" aria-label="Hour" /> :
+      <input #minuteInput class="cdp-time-minute" type="number" min="0" max="59" [value]="selectedMinute"
+        (change)="onMinuteChange(minuteInput.value)" aria-label="Minute" />
     </div>
     <div class="cdp-popup-actions">
       <button type="button" class="cdp-link-btn" (click)="setToday()">{{ todayLabel }}</button>
