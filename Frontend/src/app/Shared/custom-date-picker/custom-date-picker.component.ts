@@ -16,7 +16,7 @@ export class CustomDatePickerComponent implements OnInit, OnDestroy {
   @Input() maxDate?: string | Date;
   @Input() disableWeekends = false;
   @Input() restrictFutureDates = false;
-  @Input() language: 'en' | 'de' = 'de';
+  @Input() language: 'en' | 'de' = 'en';
   @Input() customErrorMessage?: string;
   @Input() readonly = false;
   @Input() disabled = false;

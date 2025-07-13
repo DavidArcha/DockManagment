@@ -6,11 +6,13 @@ import { AppComponent } from './app.component';
 import { CustomDatePickerComponent } from './Shared/custom-date-picker/custom-date-picker.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DatePickerDemoComponent } from './Shared/date-picker-demo/date-picker-demo.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    CustomDatePickerComponent
+    CustomDatePickerComponent,
+    DatePickerDemoComponent
   ],
   imports: [
     BrowserModule,
