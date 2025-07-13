@@ -1,0 +1,242 @@
+// custom-date-picker.component.scss
+
+.cdp-root {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    font-family: inherit;
+    width: 100%;
+    max-width: 340px;
+}
+
+.cdp-label {
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    color: #333;
+}
+
+.cdp-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.cdp-input {
+    width: 100%;
+    padding: 8px 36px 8px 10px;
+    font-size: 16px;
+    border: 1.5px solid #bbb;
+    border-radius: 6px;
+    outline: none;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+
+.cdp-input:focus {
+    border-color: #1976d2;
+}
+
+.cdp-invalid .cdp-input {
+    border-color: #f55;
+}
+
+.cdp-clear-btn,
+.cdp-calendar-btn {
+    background: transparent;
+    border: none;
+    position: absolute;
+    right: 34px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    padding: 0;
+    z-index: 2;
+    line-height: 1;
+    outline: none;
+}
+
+.cdp-clear-btn {
+    right: 34px;
+}
+
+.cdp-calendar-btn {
+    right: 7px;
+}
+
+.cdp-clear-btn svg {
+    display: block;
+}
+
+.cdp-calendar-btn svg {
+    display: block;
+}
+
+.cdp-error-msg {
+    color: #f55;
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.cdp-popup {
+    position: absolute;
+    top: 105%;
+    left: 0;
+    z-index: 10;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 6px 32px 0 rgba(0, 0, 0, 0.08), 0 1.5px 4px 0 rgba(0, 0, 0, 0.12);
+    margin-top: 2px;
+    min-width: 300px;
+    padding: 14px 12px 10px 12px;
+    box-sizing: border-box;
+    user-select: none;
+    animation: cdpFadeIn 0.15s;
+}
+
+@keyframes cdpFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.cdp-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.cdp-month-select,
+.cdp-year-select {
+    font-size: 14px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    margin: 0 2px;
+}
+
+.cdp-nav-btn {
+    background: #f4f4f4;
+    border: none;
+    border-radius: 4px;
+    font-size: 18px;
+    padding: 1px 7px;
+    color: #888;
+    cursor: pointer;
+    transition: background 0.2s;
+    outline: none;
+}
+
+.cdp-nav-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.cdp-calendar-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 2px;
+    margin-bottom: 6px;
+}
+
+.cdp-calendar-table th {
+    font-size: 12px;
+    font-weight: 500;
+    color: #888;
+    text-align: center;
+    padding: 2px 0;
+}
+
+.cdp-calendar-table td {
+    text-align: center;
+    padding: 4px 0;
+    font-size: 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+    color: #333;
+    min-width: 32px;
+    min-height: 30px;
+    outline: none;
+    border: none;
+    user-select: none;
+}
+
+.cdp-calendar-table td.cdp-today:not(.cdp-selected):not(.cdp-disabled) {
+    border: 1px solid #1976d2;
+    background: #e3f0fc;
+}
+
+.cdp-calendar-table td.cdp-selected {
+    background: #1976d2;
+    color: #fff;
+    font-weight: 500;
+}
+
+.cdp-calendar-table td.cdp-range {
+    background: #e0eafd;
+}
+
+.cdp-calendar-table td.cdp-disabled {
+    color: #ccc;
+    background: transparent;
+    pointer-events: none;
+    cursor: default;
+}
+
+.cdp-time-picker {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    margin: 8px 0 2px 0;
+}
+
+.cdp-time-hour,
+.cdp-time-minute {
+    width: 34px;
+    font-size: 15px;
+    border: 1px solid #bbb;
+    border-radius: 4px;
+    padding: 2px 5px;
+    outline: none;
+}
+
+.cdp-popup-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+.cdp-link-btn {
+    border: none;
+    background: none;
+    color: #1976d2;
+    font-size: 14px;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+@media (max-width: 520px) {
+
+    .cdp-root,
+    .cdp-popup {
+        min-width: 98vw !important;
+        max-width: 100vw;
+        left: 0 !important;
+    }
+
+    .cdp-popup {
+        border-radius: 0 0 14px 14px;
+    }
+}
