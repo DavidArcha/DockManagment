@@ -13,7 +13,12 @@
     <span class="cdp-settings-icon" role="button" tabindex="0" aria-label="Format settings"
       (click)="toggleFormatSettings()">⚙️</span>
   </div>
-  <div *ngIf="errorMsg" class="cdp-error" aria-live="polite">{{ errorMsg }}</div>
+  <div *ngIf="errorMsg" class="cdp-error" aria-live="polite">
+    {{ errorMsg }}
+    <a *ngIf="formatMismatchDetected" href="javascript:void(0)" class="cdp-refresh-link" (click)="refreshFormat()">
+      {{ language === 'de' ? 'Aktualisieren' : 'Refresh' }}
+    </a>
+  </div>
   <div #popupRef class="cdp-popup" *ngIf="isOpen" [attr.aria-modal]="true" role="dialog">
     <div class="cdp-popup-header">
       <button class="cdp-nav" aria-label="Previous month" (click)="prevMonth()">&lt;</button>

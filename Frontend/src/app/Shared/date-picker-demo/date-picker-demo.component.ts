@@ -27,13 +27,13 @@ export class DatePickerDemoComponent {
   // Date constraints for min/max demos
   min = new Date(2020, 0, 1);  // January 1, 2020
   max = new Date(2030, 11, 31); // December 31, 2030
-  
+
   // Initial date object for demo
   initialDateObject = new Date(2024, 6, 15); // July 15, 2024
-  
+
   // Storage for selected values across demo examples
   selectedValues: Record<string, string> = {};
-  
+
   // Event log to display component events
   eventLogs: string[] = [];
 
@@ -45,7 +45,7 @@ export class DatePickerDemoComponent {
   onSelectedDate(date: DateOrRange, source: string) {
     // Format the date/range for display
     this.selectedValues[source] = this.formatDateForDisplay(date);
-    
+
     // Log the event with timestamp
     this.logEvent(`${source} date picker: Selection changed to ${this.selectedValues[source] || 'null'}`);
   }
@@ -73,19 +73,19 @@ export class DatePickerDemoComponent {
    */
   private formatDateForDisplay(value: DateOrRange): string {
     if (!value) return 'No selection';
-    
+
     // Helper to format individual dates
     const formatDate = (d: Date) => {
-      return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}` + 
-        (d.getHours() || d.getMinutes() ? 
+      return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}` +
+        (d.getHours() || d.getMinutes() ?
           ` ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}` : '');
     };
-    
+
     // Handle date range objects
     if (typeof value === 'object' && 'from' in value) {
       return `${formatDate(value.from)}${value.to ? ' to ' + formatDate(value.to) : ' (selecting end date...)'}`;
     }
-    
+
     // Handle single date
     return formatDate(value as Date);
   }
@@ -98,13 +98,18 @@ export class DatePickerDemoComponent {
     const now = new Date();
     const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
     this.eventLogs.unshift(`[${timestamp}] ${message}`);
-    
+
     // Keep log to a reasonable size
     if (this.eventLogs.length > 20) {
       this.eventLogs.pop();
     }
   }
+  selectedFormattedDate: string = '';
 
+  onFormattedDate(dateStr: string) {
+    this.selectedFormattedDate = dateStr;
+    console.log('Selected date:', dateStr); // This will display in parent as requested
+  }
   // In your parent component
   onFormattedDateReceived(formattedDate: string) {
     console.log('Received formatted date:', formattedDate);
