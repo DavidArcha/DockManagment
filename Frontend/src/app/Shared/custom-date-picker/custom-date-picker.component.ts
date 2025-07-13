@@ -854,6 +854,60 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     
     this.cdr.markForCheck();
   }
+
+  // Add this method to the CustomDatePickerComponent class
+
+  // Format date for tooltip in long format (e.g., 14-July-2025)
+  formatDateForTooltip(date: Date | null): string {
+    if (!date) return '';
+    
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June', 
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    const germanMonths = [
+      'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 
+      'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+    ];
+    
+    const monthNames = this.language === 'de' ? germanMonths : months;
+    
+    const day = date.getDate();
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    
+    let formattedDate = `${day}-${month}-${year}`;
+    
+    // Add time if enabled
+    if (this.showTimePicker) {
+      const pad = (n: number) => n < 10 ? '0' + n : n;
+      if (this.timeFormatOption === '12hr') {
+        const hours12 = date.getHours() === 0 ? 12 : (date.getHours() > 12 ? date.getHours() - 12 : date.getHours());
+        const ampm = date.getHours() >= 12 ? 'PM' : 'AM';
+        formattedDate += ` ${pad(hours12)}:${pad(date.getMinutes())} ${ampm}`;
+      } else {
+        formattedDate += ` ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+      }
+    }
+    
+    return formattedDate;
+  }
+
+  // Get tooltip text based on selection
+  getTooltip(): string {
+    if (!this.selected) return '';
+    
+    if (this.enableDateRangeSelection && this.selected && typeof this.selected === 'object' && 'from' in this.selected) {
+      const from = this.formatDateForTooltip((this.selected as DateRange).from);
+      const to = (this.selected as DateRange).to ? this.formatDateForTooltip((this.selected as DateRange).to) : '';
+      return to ? `${from} ${this.language === 'de' ? 'bis' : 'to'} ${to}` : from;
+    } else if (this.selected instanceof Date) {
+      return this.formatDateForTooltip(this.selected);
+    }
+    
+    return '';
+  }
 }
 
 

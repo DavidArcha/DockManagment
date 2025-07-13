@@ -1,8 +1,13 @@
 <div class="cdp-root" tabindex="-1" [class.cdp-open]="isOpen">
   <div class="cdp-input-wrap">
-    <input #inputRef type="text" class="cdp-input" [placeholder]="getPlaceholder()" [formControl]="inputControl"
-      [attr.aria-label]="language === 'de' ? 'Datum auswählen' : 'Pick a date'" (focus)="openPopup()"
-      (click)="openPopup()" autocomplete="off" />
+    <input #inputRef type="text" class="cdp-input" 
+      [placeholder]="getPlaceholder()" 
+      [formControl]="inputControl"
+      [attr.aria-label]="language === 'de' ? 'Datum auswählen' : 'Pick a date'" 
+      [title]="getTooltip()"
+      (focus)="openPopup()"
+      (click)="openPopup()" 
+      autocomplete="off" />
     <span class="cdp-calendar-icon" role="button" tabindex="0" aria-label="Open calendar"
       (click)="togglePopup()">&#128197;</span>
     <span class="cdp-settings-icon" role="button" tabindex="0" aria-label="Format settings"
