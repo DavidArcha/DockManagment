@@ -1,0 +1,201 @@
+.cdp-root {
+    position: relative;
+    display: inline-block;
+    width: 240px;
+    font-family: inherit;
+
+    .cdp-input-wrap {
+        display: flex;
+        align-items: center;
+        position: relative;
+
+        .cdp-input {
+            width: 100%;
+            padding: 8px 36px 8px 8px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+
+            &:focus {
+                border-color: #1976d2;
+            }
+        }
+
+        .cdp-calendar-icon {
+            position: absolute;
+            right: 8px;
+            font-size: 1.2rem;
+            color: #888;
+            cursor: pointer;
+
+            &:hover,
+            &:focus {
+                color: #1976d2;
+            }
+        }
+    }
+
+    .cdp-error {
+        color: #d32f2f;
+        font-size: 0.85rem;
+        margin-top: 2px;
+        margin-bottom: 2px;
+        min-height: 1.2em;
+    }
+
+    .cdp-popup {
+        position: absolute;
+        top: calc(100% + 2px);
+        left: 0;
+        z-index: 999;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        box-shadow: 0 6px 18px 2px rgba(0, 0, 0, 0.10);
+        min-width: 240px;
+        width: 100%;
+        padding: 8px;
+        animation: cdpFadeIn 0.2s;
+
+        @media (max-width: 500px) {
+            min-width: 90vw;
+            font-size: 1.1rem;
+        }
+
+        .cdp-popup-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 4px;
+
+            select,
+            .cdp-nav {
+                font-size: 1rem;
+                padding: 2px 4px;
+                margin-right: 2px;
+                border-radius: 3px;
+            }
+
+            .cdp-nav {
+                background: none;
+                border: none;
+                color: #1976d2;
+                cursor: pointer;
+                font-weight: bold;
+
+                &:disabled {
+                    color: #aaa;
+                    cursor: not-allowed;
+                }
+            }
+        }
+
+        .cdp-days-row {
+            display: flex;
+            font-weight: bold;
+            justify-content: space-between;
+            font-size: 0.97em;
+        }
+
+        .cdp-weeks {
+            .cdp-week {
+                display: flex;
+                justify-content: space-between;
+            }
+        }
+
+        .cdp-day-cell {
+            flex: 1 0 24px;
+            text-align: center;
+            margin: 2px;
+            padding: 3px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.1s;
+            color: #222; // default text color for current month days
+            background: none;
+            cursor: pointer; // Default color for current month
+
+            &.other-month {
+                color: #bbb !important; // gray color for other months (override if necessary)
+                cursor: default;
+            }
+
+            &.disabled {
+                color: #ddd !important;
+                pointer-events: none;
+            }
+
+            &.today {
+                border: 1px solid #2196f3;
+                font-weight: bold;
+            }
+
+            &.selected {
+                background: #2196f3;
+                color: #fff !important;
+            }
+
+            &.in-range {
+                background: #e3f2fd;
+            }
+
+            &:hover:not(.disabled):not(.selected):not(.other-month) {
+                background: #e3f2fd;
+            }
+
+            &:focus {
+                outline: 2px solid #1976d2;
+            }
+        }
+
+        .cdp-timepicker {
+            display: flex;
+            justify-content: flex-start;
+            gap: 4px;
+            margin-top: 8px;
+            font-size: 1rem;
+
+            input[type="number"] {
+                width: 2.5em;
+                padding: 2px 4px;
+                font-size: 1em;
+            }
+        }
+
+        .cdp-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+
+            .cdp-link {
+                background: none;
+                border: none;
+                color: #1976d2;
+                font-size: 1em;
+                cursor: pointer;
+                padding: 2px 8px;
+                border-radius: 3px;
+                text-decoration: underline;
+
+                &:hover,
+                &:focus {
+                    background: #f1f8ff;
+                }
+            }
+        }
+    }
+}
+
+@keyframes cdpFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

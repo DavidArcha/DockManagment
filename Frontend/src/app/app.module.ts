@@ -1,18 +1,33 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { DatePipe } from '@angular/common';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { CustomDatePickerComponent } from './Shared/custom-date-picker/custom-date-picker.component';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { DatePickerDemoComponent } from './Shared/date-picker-demo/date-picker-demo.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    CustomDatePickerComponent,
+    DatePickerDemoComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule
   ],
-  providers: [],
+  exports: [
+    CustomDatePickerComponent
+  ],
+  providers: [
+    DatePipe
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
