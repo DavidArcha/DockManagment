@@ -1,7 +1,8 @@
 import {
-  Component, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener, OnDestroy, OnInit, SimpleChanges, OnChanges
+  Component, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener, OnDestroy, OnInit, SimpleChanges, OnChanges, ChangeDetectionStrategy, ChangeDetectorRef, Renderer2
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 type DateRange = { from: Date, to: Date | null };
 type DateOrRange = Date | DateRange | null;
@@ -19,7 +20,8 @@ const DAYS = {
   selector: 'app-custom-date-picker',
   standalone: false,
   templateUrl: './custom-date-picker.component.html',
-  styleUrl: './custom-date-picker.component.scss'
+  styleUrl: './custom-date-picker.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 
 export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
@@ -59,12 +61,30 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   hours = 0;
   minutes = 0;
 
-  private globalClickUnlistener?: (e: Event) => void;
+  // Cache properties
+  private cachedMonth: number | null = null;
+  private cachedYear: number | null = null; 
+  private cachedWeeks: any[][] = [];
+
+  // Use Angular's renderer for better testability and SSR compatibility
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private renderer: Renderer2,
+    private elementRef: ElementRef
+  ) {}
+
+  private globalClickUnlistener?: () => void;
+  private inputSubscription?: Subscription;
+
+  private _years: number[] | null = null;
 
   ngOnInit() {
     this.setInitialDate(this.initialDate);
-    this.inputControl.valueChanges.subscribe(v => this.onInputChange(v || ''));
-    this.buildCalendar(); // Initialize calendar on component load
+    this.inputSubscription = this.inputControl.valueChanges.subscribe(v => this.onInputChange(v || ''));
+    // Only build calendar when necessary
+    if (this.isOpen) {
+      this.buildCalendar();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -74,10 +94,17 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     if ('language' in changes && this.isOpen) {
       this.buildCalendar();
     }
+    if ('minDate' in changes || 'maxDate' in changes || 'restrictFutureDates' in changes) {
+      this._years = null; // Reset years cache
+    }
   }
 
   ngOnDestroy() {
     this.removeGlobalClickListener();
+    // Explicitly unsubscribe from any subscriptions
+    if (this.inputSubscription) {
+      this.inputSubscription.unsubscribe();
+    }
   }
 
   openPopup() {
@@ -113,14 +140,20 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
 
   // Add/Remove document click
   addGlobalClickListener() {
-    this.globalClickUnlistener = this.onGlobalClick.bind(this);
-    document.addEventListener('mousedown', this.globalClickUnlistener);
-    document.addEventListener('touchstart', this.globalClickUnlistener);
+    if (this.globalClickUnlistener) {
+      return; // Already listening
+    }
+    
+    this.globalClickUnlistener = this.renderer.listen('document', 'mousedown', (e: Event) => {
+      if (!this.elementRef.nativeElement.contains(e.target)) {
+        this.closePopup();
+        this.cdr.markForCheck();
+      }
+    });
   }
   removeGlobalClickListener() {
     if (this.globalClickUnlistener) {
-      document.removeEventListener('mousedown', this.globalClickUnlistener);
-      document.removeEventListener('touchstart', this.globalClickUnlistener);
+      this.globalClickUnlistener();
       this.globalClickUnlistener = undefined;
     }
   }
@@ -174,7 +207,20 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     this.viewYear = d.getFullYear();
   }
 
+  // Efficient date helpers
+  private createDate(year: number, month: number, day: number): Date {
+    const date = new Date(0);
+    date.setFullYear(year, month, day);
+    return date;
+  }
+
   buildCalendar() {
+    // Return cached result if month and year are unchanged
+    if (this.cachedMonth === this.viewMonth && 
+        this.cachedYear === this.viewYear && 
+        this.cachedWeeks.length > 0) {
+      return;
+    }
 
     const weeks: any[][] = [];
 
@@ -200,7 +246,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
         const tempDate = new Date(startDate);
         tempDate.setDate(startDate.getDate() + dayOffset);
         // Create a fresh date to avoid mutation issues
-        const currentCellDate = new Date(
+        const currentCellDate = this.createDate(
           tempDate.getFullYear(),
           tempDate.getMonth(),
           tempDate.getDate()
@@ -223,6 +269,10 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     this.calendarWeeks = weeks;
+    this.cachedMonth = this.viewMonth;
+    this.cachedYear = this.viewYear;
+    this.cachedWeeks = weeks;
+    this.cdr.markForCheck();
   }
 
 
@@ -362,33 +412,54 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     return `${this.formatDate(range.from)} to ${this.formatDate(range.to)}`;
   }
   parseDate(val: string | Date): Date | null {
-    if (val instanceof Date) return val;
-    if (!val) return null;
-    let re, parts;
-    switch (this.dateFormat) {
-      case 'dd-mm-yyyy':
-        re = /^(\d{2})-(\d{2})-(\d{4})/;
-        break;
-      case 'dd/mm/yyyy':
-        re = /^(\d{2})\/(\d{2})\/(\d{4})/;
-        break;
-      case 'mm-dd-yyyy':
-        re = /^(\d{2})-(\d{2})-(\d{4})/;
-        break;
+    try {
+      if (val instanceof Date) return new Date(val.getTime()); // Create a clone to prevent mutation
+      if (!val) return null;
+      
+      let re, parts;
+      switch (this.dateFormat) {
+        case 'dd-mm-yyyy':
+          re = /^(\d{1,2})-(\d{1,2})-(\d{4})$/;
+          break;
+        case 'dd/mm/yyyy':
+          re = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+          break;
+        case 'mm-dd-yyyy':
+          re = /^(\d{1,2})-(\d{1,2})-(\d{4})$/;
+          break;
+        default:
+          return null;
+      }
+      
+      parts = re.exec(val);
+      if (!parts) return null;
+      
+      let [, d1, d2, y] = parts;
+      let dd = parseInt(this.dateFormat.startsWith('dd') ? d1 : d2, 10);
+      let mm = parseInt(this.dateFormat.startsWith('dd') ? d2 : d1, 10) - 1;
+      let yyyy = parseInt(y, 10);
+      
+      // Basic date validation
+      if (mm < 0 || mm > 11) return null;
+      if (dd < 1 || dd > new Date(yyyy, mm + 1, 0).getDate()) return null;
+      
+      let dateObj = new Date(yyyy, mm, dd);
+      
+      // Parse time if present
+      let timeMatch = val.match(/(\d{1,2}):(\d{1,2})/);
+      if (timeMatch) {
+        const hours = parseInt(timeMatch[1], 10);
+        const minutes = parseInt(timeMatch[2], 10);
+        if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
+          dateObj.setHours(hours, minutes, 0, 0);
+        }
+      }
+      
+      return isNaN(dateObj.getTime()) ? null : dateObj;
+    } catch (err) {
+      console.error('Error parsing date:', err);
+      return null;
     }
-    parts = re.exec(val);
-    if (!parts) return null;
-    let [, d1, d2, y] = parts;
-    let dd = parseInt(this.dateFormat.startsWith('dd') ? d1 : d2, 10);
-    let mm = parseInt(this.dateFormat.startsWith('dd') ? d2 : d1, 10) - 1;
-    let dateObj = new Date(+y, mm, dd);
-    // Parse time if present
-    let timeMatch = val.match(/(\d{2}):(\d{2})/);
-    if (timeMatch) {
-      dateObj.setHours(+timeMatch[1]);
-      dateObj.setMinutes(+timeMatch[2]);
-    }
-    return isNaN(dateObj.getTime()) ? null : dateObj;
   }
 
   isDateEnabled(d: Date): boolean {
@@ -495,6 +566,10 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     return DAYS[this.language] || DAYS['en'] || [];
   }
   get years(): number[] {
+    if (this._years) {
+      return this._years;
+    }
+    
     try {
       const now = new Date();
       let minY = this.minDate ? this.minDate.getFullYear() : now.getFullYear() - 100;
@@ -503,12 +578,11 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
 
       const res: number[] = [];
       for (let y = minY; y <= maxY; y++) res.push(y);
-
-      // Ensure we always return a valid array with at least one year
-      return res.length > 0 ? res : [now.getFullYear()];
+      
+      this._years = res.length > 0 ? res : [now.getFullYear()];
+      return this._years;
     } catch (error) {
       console.error('Error in years getter:', error);
-      // Fallback in case of any error
       const currentYear = new Date().getFullYear();
       return [currentYear - 1, currentYear, currentYear + 1];
     }
@@ -522,5 +596,21 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       return d;
     }
     return null;
+  }
+
+  trackByWeekIndex(index: number): number {
+    return index;
+  }
+
+  trackByDayDate(index: number, day: any): string {
+    return `${day.date.getFullYear()}-${day.date.getMonth()}-${day.date.getDate()}`;
+  }
+
+  trackByMonthIndex(index: number): number {
+    return index;
+  }
+
+  trackByYear(index: number, year: number): number {
+    return year;
   }
 }

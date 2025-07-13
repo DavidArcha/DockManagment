@@ -11,10 +11,10 @@
     <div class="cdp-popup-header">
       <button class="cdp-nav" aria-label="Previous month" (click)="prevMonth()">&lt;</button>
       <select [ngModel]="viewMonth" (ngModelChange)="changeMonth($event)">
-        <option *ngFor="let m of months; let i = index" [value]="i">{{ m }}</option>
+        <option *ngFor="let m of months; let i = index; trackBy: trackByMonthIndex" [value]="i">{{ m }}</option>
       </select>
       <select [ngModel]="viewYear" (ngModelChange)="changeYear($event)">
-        <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+        <option *ngFor="let y of years; trackBy: trackByYear" [value]="y">{{ y }}</option>
       </select>
       <button class="cdp-nav" aria-label="Next month" (click)="nextMonth()">&gt;</button>
     </div>
@@ -22,16 +22,16 @@
       <span *ngFor="let d of days" class="cdp-day-label">{{ d }}</span>
     </div>
     <div class="cdp-weeks">
-      <div *ngFor="let week of calendarWeeks" class="cdp-week">
-        <span *ngFor="let cell of week" class="cdp-day-cell" 
+      <div *ngFor="let week of calendarWeeks; trackBy: trackByWeekIndex" class="cdp-week">
+        <span *ngFor="let cell of week; trackBy: trackByDayDate" class="cdp-day-cell" 
           [class.today]="cell.isToday"
           [class.selected]="cell.isSelected" 
           [class.in-range]="cell.isInRange" 
           [class.disabled]="cell.disabled"
           [class.other-month]="cell.isOtherMonth"
           tabindex="0" (click)="selectDateCell(cell)">
-      {{ cell.label }}
-    </span>
+          {{ cell.label }}
+        </span>
       </div>
     </div>
     <div *ngIf="showTimePicker && !enableDateRangeSelection" class="cdp-timepicker">
