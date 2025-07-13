@@ -34,6 +34,19 @@
                 color: #1976d2;
             }
         }
+
+        .cdp-settings-icon {
+            position: absolute;
+            right: 32px;
+            font-size: 1.1rem;
+            color: #888;
+            cursor: pointer;
+
+            &:hover,
+            &:focus {
+                color: #1976d2;
+            }
+        }
     }
 
     .cdp-error {
@@ -42,6 +55,17 @@
         margin-top: 2px;
         margin-bottom: 2px;
         min-height: 1.2em;
+
+        .cdp-refresh-link {
+            margin-left: 8px;
+            color: #1976d2;
+            text-decoration: underline;
+            cursor: pointer;
+
+            &:hover {
+                color: #0d47a1;
+            }
+        }
     }
 
     .cdp-popup {
@@ -150,17 +174,68 @@
             }
         }
 
+        .cdp-format-settings {
+            border-top: 1px solid #eee;
+            margin-top: 8px;
+            padding-top: 8px;
+        }
+
+        .cdp-settings-section {
+            margin-bottom: 8px;
+        }
+
+        .cdp-settings-title {
+            font-weight: bold;
+            margin-bottom: 4px;
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        .cdp-format-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .cdp-format-option {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cdp-checkbox-wrap,
+        .cdp-radio-wrap {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin: 4px 0;
+        }
+
+        .cdp-time-format-options {
+            margin-left: 12px;
+            margin-top: 4px;
+            display: flex;
+            gap: 12px;
+        }
+
         .cdp-timepicker {
             display: flex;
             justify-content: flex-start;
             gap: 4px;
             margin-top: 8px;
             font-size: 1rem;
+            align-items: center;
 
             input[type="number"] {
                 width: 2.5em;
                 padding: 2px 4px;
                 font-size: 1em;
+            }
+
+            select {
+                padding: 2px 4px;
+                font-size: 1em;
+                margin-left: 4px;
             }
         }
 
@@ -183,6 +258,37 @@
                 &:focus {
                     background: #f1f8ff;
                 }
+            }
+        }
+
+        .cdp-format-dropdown {
+            margin-top: 8px;
+            margin-left: 16px;
+
+            .cdp-format-select {
+                width: 100%;
+                padding: 6px 8px;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+                font-size: 0.9em;
+                background-color: white;
+
+                &:focus {
+                    outline: none;
+                    border-color: #1976d2;
+                    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.25);
+                }
+            }
+        }
+
+        .cdp-checkbox-wrap {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+
+            label {
+                margin-left: 6px;
+                font-weight: 500;
             }
         }
     }

@@ -8,6 +8,7 @@ import { CustomDatePickerComponent } from './Shared/custom-date-picker/custom-da
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DatePickerDemoComponent } from './Shared/date-picker-demo/date-picker-demo.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { DatePickerDemoComponent } from './Shared/date-picker-demo/date-picker-d
     AppRoutingModule,
     CommonModule,
     FormsModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    BrowserAnimationsModule
   ],
   exports: [
     CustomDatePickerComponent
