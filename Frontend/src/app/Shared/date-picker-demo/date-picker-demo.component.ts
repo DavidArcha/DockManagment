@@ -1,5 +1,8 @@
 import { Component } from '@angular/core';
 
+type DateRange = { from: Date, to: Date | null };
+type DateOrRange = Date | DateRange | null;
+
 @Component({
   selector: 'app-date-picker-demo',
   standalone: false,
@@ -7,21 +10,18 @@ import { Component } from '@angular/core';
   styleUrl: './date-picker-demo.component.scss'
 })
 export class DatePickerDemoComponent {
-  eventLog: string[] = [];
+  min = new Date(2020, 0, 1); // January 1, 2020
+  max = new Date(2030, 11, 31); // December 31, 2030
 
-  onSelect(label: string, value: any) {
-    this.eventLog.unshift(`[${new Date().toLocaleTimeString()}] [${label}] Selected: ${JSON.stringify(value)}`);
-    this.trimLog();
+  onSelectedDate(date: DateOrRange) {
+    console.log('Selected date:', date);
   }
-  onOpened(label: string) {
-    this.eventLog.unshift(`[${new Date().toLocaleTimeString()}] [${label}] Popup opened`);
-    this.trimLog();
+
+  onOpened() {
+    console.log('Date picker opened');
   }
-  onClosed(label: string) {
-    this.eventLog.unshift(`[${new Date().toLocaleTimeString()}] [${label}] Popup closed`);
-    this.trimLog();
-  }
-  private trimLog() {
-    if (this.eventLog.length > 50) this.eventLog.pop();
+
+  onClosed() {
+    console.log('Date picker closed');
   }
 }

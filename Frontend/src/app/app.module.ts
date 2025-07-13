@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { DatePipe } from '@angular/common';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -7,14 +8,12 @@ import { CustomDatePickerComponent } from './Shared/custom-date-picker/custom-da
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { DatePickerDemoComponent } from './Shared/date-picker-demo/date-picker-demo.component';
-import { CustomCalenderComponent } from './calender/custom-calender/custom-calender.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     CustomDatePickerComponent,
-    DatePickerDemoComponent,
-    CustomCalenderComponent
+    DatePickerDemoComponent
   ],
   imports: [
     BrowserModule,
@@ -26,7 +25,9 @@ import { CustomCalenderComponent } from './calender/custom-calender/custom-calen
   exports: [
     CustomDatePickerComponent
   ],
-  providers: [],
+  providers: [
+    DatePipe
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -1,12 +1,69 @@
 /* date-picker-demo.component.scss */
-h2 {
-  color: #2154ad;
-  margin-bottom: 18px;
+.demo-container {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
 }
-section {
-  margin-bottom: 26px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 14px;
+
+.demo-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.demo-section h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.demo-section p {
+  margin-top: 10px;
+  padding: 8px;
+  background-color: #e8f4f8;
+  border-radius: 4px;
+  border-left: 4px solid #007bff;
+  font-family: monospace;
+}
+
+.instruction {
+  background-color: #fff3cd !important;
+  border-left: 4px solid #ffc107 !important;
+  font-family: Arial, sans-serif !important;
+  font-style: italic;
+  font-size: 14px;
+}
+
+.event-log {
+  margin-top: 30px;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+}
+
+.event-log h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.log-entry {
+  font-family: monospace;
+  font-size: 12px;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  background-color: #fff;
+  border-radius: 4px;
+  border-left: 3px solid #28a745;
+}
+
+h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
 }
 h3 {
   margin-top: 16px;
