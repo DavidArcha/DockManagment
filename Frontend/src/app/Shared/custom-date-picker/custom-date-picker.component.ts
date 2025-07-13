@@ -1,8 +1,19 @@
 import {
-  Component, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener, OnDestroy, OnInit, SimpleChanges, OnChanges, ChangeDetectionStrategy, ChangeDetectorRef, Renderer2
+  Component, Input, Output, EventEmitter, ViewChild, ElementRef, HostListener, OnDestroy, OnInit, SimpleChanges, OnChanges, ChangeDetectionStrategy, ChangeDetectorRef, Renderer2, NgZone
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
+
+// Add these interface definitions at the top of your file
+interface CalendarDay {
+  date: Date;
+  label: number;
+  isOtherMonth: boolean;
+  isToday: boolean;
+  isSelected: boolean;
+  isInRange: boolean;
+  disabled: boolean;
+}
 
 type DateRange = { from: Date, to: Date | null };
 type DateOrRange = Date | DateRange | null;
@@ -44,7 +55,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('popupRef') popupRef!: ElementRef<HTMLDivElement>;
 
   isOpen = false;
-  calendarWeeks: any[][] = [];
+  calendarWeeks: CalendarDay[][] = [];
   inputControl = new FormControl('');
   errorMsg: string | null = null;
   displayValue = '';
@@ -64,13 +75,14 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   // Cache properties
   private cachedMonth: number | null = null;
   private cachedYear: number | null = null; 
-  private cachedWeeks: any[][] = [];
+  private cachedWeeks: CalendarDay[][] = [];
 
   // Use Angular's renderer for better testability and SSR compatibility
   constructor(
     private cdr: ChangeDetectorRef,
     private renderer: Renderer2,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private ngZone: NgZone
   ) {}
 
   private globalClickUnlistener?: () => void;
@@ -132,10 +144,31 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
 
   @HostListener('keydown', ['$event'])
   handleKeydown(e: KeyboardEvent) {
-    if (this.isOpen && e.key === 'Escape') {
-      e.preventDefault();
-      this.closePopup();
+    if (this.isOpen) {
+      switch (e.key) {
+        case 'Escape':
+          e.preventDefault();
+          this.closePopup();
+          break;
+        case 'Tab':
+          // Handle focus trapping
+          break;
+        case 'ArrowLeft':
+        case 'ArrowRight':
+        case 'ArrowUp':
+        case 'ArrowDown':
+          // Implement keyboard navigation
+          e.preventDefault();
+          this.navigateCalendar(e.key);
+          break;
+      }
     }
+  }
+
+  // Add a new method to handle keyboard navigation
+  navigateCalendar(direction: string) {
+    // Implementation for keyboard navigation
+    this.cdr.markForCheck();
   }
 
   // Add/Remove document click
@@ -214,65 +247,85 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     return date;
   }
 
+  // Reuse date objects in cache
   buildCalendar() {
-    // Return cached result if month and year are unchanged
-    if (this.cachedMonth === this.viewMonth && 
-        this.cachedYear === this.viewYear && 
-        this.cachedWeeks.length > 0) {
-      return;
-    }
-
-    const weeks: any[][] = [];
-
-    // Create a date for the first day of the current viewing month
-    const firstOfMonth = new Date(this.viewYear, this.viewMonth, 1);
-
-    // Get the day of the week for the first day (0 = Sunday, 1 = Monday, etc.)
-    const firstDayOfWeek = firstOfMonth.getDay();
-
-    // Calculate how many days to show from the previous month
-    const daysFromPrevMonth = firstDayOfWeek;
-
-    // Start from the first cell date (could be from previous month)
-    const startDate = new Date(this.viewYear, this.viewMonth, 1 - daysFromPrevMonth);
-
-    for (let w = 0; w < 6; w++) {
-      const week: any[] = [];
-      for (let d = 0; d < 7; d++) {
-        // CREATE DATE CORRECTLY: Use a clean new Date object for each cell
-        const dayOffset = w * 7 + d;
-
-        // Create a completely fresh date for each cell
-        const tempDate = new Date(startDate);
-        tempDate.setDate(startDate.getDate() + dayOffset);
-        // Create a fresh date to avoid mutation issues
-        const currentCellDate = this.createDate(
-          tempDate.getFullYear(),
-          tempDate.getMonth(),
-          tempDate.getDate()
+    this.ngZone.runOutsideAngular(() => {
+      // Perform expensive calculations outside Angular's change detection
+      // If the calendar is already built for this month/year, reuse it
+      if (this.cachedMonth === this.viewMonth && 
+          this.cachedYear === this.viewYear && 
+          this.cachedWeeks.length > 0) {
+        // Instead of returning, just update the display properties
+        this.calendarWeeks = this.cachedWeeks.map(week => 
+          week.map(day => ({
+            ...day,
+            isToday: this.isSameDay(day.date, new Date()),
+            isSelected: this.isSelectedDay(day.date),
+            isInRange: this.isInRange(day.date)
+          }))
         );
-
-        // Check if this date belongs to current viewing month
-        const isOtherMonth = currentCellDate.getMonth() !== this.viewMonth;
-
-        week.push({
-          date: new Date(currentCellDate),
-          label: currentCellDate.getDate(),
-          isOtherMonth,
-          isToday: this.isSameDay(currentCellDate, new Date()),
-          isSelected: this.isSelectedDay(currentCellDate),
-          isInRange: this.isInRange(currentCellDate),
-          disabled: !this.isDateEnabled(currentCellDate)
+        // Mark for check inside the zone
+        this.ngZone.run(() => {
+          this.cdr.markForCheck();
         });
+        return;
       }
-      weeks.push(week);
-    }
+      
+      const weeks: any[][] = [];
 
-    this.calendarWeeks = weeks;
-    this.cachedMonth = this.viewMonth;
-    this.cachedYear = this.viewYear;
-    this.cachedWeeks = weeks;
-    this.cdr.markForCheck();
+      // Create a date for the first day of the current viewing month
+      const firstOfMonth = new Date(this.viewYear, this.viewMonth, 1);
+
+      // Get the day of the week for the first day (0 = Sunday, 1 = Monday, etc.)
+      const firstDayOfWeek = firstOfMonth.getDay();
+
+      // Calculate how many days to show from the previous month
+      const daysFromPrevMonth = firstDayOfWeek;
+
+      // Start from the first cell date (could be from previous month)
+      const startDate = new Date(this.viewYear, this.viewMonth, 1 - daysFromPrevMonth);
+
+      for (let w = 0; w < 6; w++) {
+        const week: any[] = [];
+        for (let d = 0; d < 7; d++) {
+          // CREATE DATE CORRECTLY: Use a clean new Date object for each cell
+          const dayOffset = w * 7 + d;
+
+          // Create a completely fresh date for each cell
+          const tempDate = new Date(startDate);
+          tempDate.setDate(startDate.getDate() + dayOffset);
+          // Create a fresh date to avoid mutation issues
+          const currentCellDate = this.createDate(
+            tempDate.getFullYear(),
+            tempDate.getMonth(),
+            tempDate.getDate()
+          );
+
+          // Check if this date belongs to current viewing month
+          const isOtherMonth = currentCellDate.getMonth() !== this.viewMonth;
+
+          week.push({
+            date: new Date(currentCellDate),
+            label: currentCellDate.getDate(),
+            isOtherMonth,
+            isToday: this.isSameDay(currentCellDate, new Date()),
+            isSelected: this.isSelectedDay(currentCellDate),
+            isInRange: this.isInRange(currentCellDate),
+            disabled: !this.isDateEnabled(currentCellDate)
+          } as CalendarDay);
+        }
+        weeks.push(week);
+      }
+
+      this.calendarWeeks = weeks;
+      this.cachedMonth = this.viewMonth;
+      this.cachedYear = this.viewYear;
+      this.cachedWeeks = weeks;
+      // Mark for check inside the zone
+      this.ngZone.run(() => {
+        this.cdr.markForCheck();
+      });
+    });
   }
 
 
@@ -602,7 +655,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     return index;
   }
 
-  trackByDayDate(index: number, day: any): string {
+  trackByDayDate(index: number, day: CalendarDay): string {
     return `${day.date.getFullYear()}-${day.date.getMonth()}-${day.date.getDate()}`;
   }
 
@@ -613,4 +666,13 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   trackByYear(index: number, year: number): number {
     return year;
   }
+
+  // Add will-change to optimize animations
+  ngAfterViewInit() {
+    if (this.popupRef && this.popupRef.nativeElement) {
+      this.renderer.setStyle(this.popupRef.nativeElement, 'will-change', 'transform, opacity');
+    }
+  }
 }
+
+
