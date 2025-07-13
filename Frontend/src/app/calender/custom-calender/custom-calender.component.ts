@@ -209,23 +209,7 @@ export class CustomCalenderComponent implements OnInit, OnDestroy, ControlValueA
     }
   }
 
-  onTodayClick() {
-    const today = new Date();
-    if (this.enableDateRangeSelection) {
-      this.selectedStartDate = today;
-      this.selectedEndDate = today;
-      this.emitRangeValue();
-    } else {
-      this.selectedSingleDate = today;
-      this.emitSingleValue();
-    }
-    this.updateDisplayValue();
-    this.generateCalendar();
-    if (this.closeOnSelect) {
-      this.closePopup();
-    }
-  }
-
+  
   onClearClick() {
     this.clearSelection();
     this.closePopup();
@@ -265,6 +249,28 @@ export class CustomCalenderComponent implements OnInit, OnDestroy, ControlValueA
     this.selectedTime[type] = value;
     if (this.selectedSingleDate) {
       this.emitSingleValue();
+    }
+  }
+
+  onTodayClick() {
+    const today = new Date();
+    
+    // Update calendar to show current month
+    this.currentMonth = today.getMonth();
+    this.currentYear = today.getFullYear();
+    
+    if (this.enableDateRangeSelection) {
+      this.selectedStartDate = today;
+      this.selectedEndDate = today;
+      this.emitRangeValue();
+    } else {
+      this.selectedSingleDate = today;
+      this.emitSingleValue();
+    }
+    this.updateDisplayValue();
+    this.generateCalendar();
+    if (this.closeOnSelect) {
+      this.closePopup();
     }
   }
 
@@ -474,6 +480,11 @@ export class CustomCalenderComponent implements OnInit, OnDestroy, ControlValueA
         minutes: date.getMinutes()
       };
     }
+    
+    // Update calendar to show the selected date's month
+    this.currentMonth = date.getMonth();
+    this.currentYear = date.getFullYear();
+    
     this.emitSingleValue();
     this.updateDisplayValue();
     this.generateCalendar();
@@ -493,6 +504,10 @@ export class CustomCalenderComponent implements OnInit, OnDestroy, ControlValueA
         this.selectedEndDate = null;
       }
       this.isSelectingEndDate = false;
+      
+      // Update calendar to show the start date's month
+      this.currentMonth = date.getMonth();
+      this.currentYear = date.getFullYear();
     } else {
       if (date < this.selectedStartDate) {
         this.selectedEndDate = this.selectedStartDate;
@@ -547,6 +562,19 @@ export class CustomCalenderComponent implements OnInit, OnDestroy, ControlValueA
     }
     
     this.dateControl.setValue(this.displayValue, { emitEvent: false });
+    
+    // Update current month/year to match selected date
+    this.updateCurrentMonthYear();
+  }
+
+  private updateCurrentMonthYear() {
+    if (this.selectedSingleDate) {
+      this.currentMonth = this.selectedSingleDate.getMonth();
+      this.currentYear = this.selectedSingleDate.getFullYear();
+    } else if (this.selectedStartDate) {
+      this.currentMonth = this.selectedStartDate.getMonth();
+      this.currentYear = this.selectedStartDate.getFullYear();
+    }
   }
 
   private clearSelection() {
