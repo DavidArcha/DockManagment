@@ -34,9 +34,8 @@ const DAYS = {
   styleUrl: './custom-date-picker.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-
 export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
-  @Input() dateFormat: 'dd-mm-yyyy' | 'dd/mm/yyyy' | 'mm-dd-yyyy' = 'dd-mm-yyyy';
+  @Input() dateFormat: 'dd-mm-yyyy' | 'dd/mm/yyyy' | 'mm/dd/yyyy' | 'mm-dd-yyyy' | 'dd-mmm-yyyy' | 'mmm-dd-yyyy' = 'dd-mm-yyyy';
   @Input() initialDate: string | Date | DateRange | null = null;
   @Input() enableDateRangeSelection = false;
   @Input() showTimePicker = false;
@@ -77,6 +76,19 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   private cachedYear: number | null = null; 
   private cachedWeeks: CalendarDay[][] = [];
 
+  // New properties for format settings
+  showFormatSettings = false;
+  availableDateFormats = [
+    'dd-mm-yyyy', 
+    'dd/mm/yyyy', 
+    'mm/dd/yyyy', 
+    'dd-mmm-yyyy',
+    'mmm-dd-yyyy'
+  ];
+  timeFormatOption: '12hr' | '24hr' = '24hr';
+  showTimeOption = false;
+  enableFormatChange = false;
+  
   // Use Angular's renderer for better testability and SSR compatibility
   constructor(
     private cdr: ChangeDetectorRef,
@@ -444,7 +456,9 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   // Helpers
   formatDate(d: Date): string {
     const pad = (n: number) => n < 10 ? '0' + n : n;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     let str = '';
+    
     switch (this.dateFormat) {
       case 'dd-mm-yyyy':
         str = `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
@@ -452,12 +466,32 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       case 'dd/mm/yyyy':
         str = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
         break;
+      case 'mm/dd/yyyy':
+        str = `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`;
+        break;
       case 'mm-dd-yyyy':
         str = `${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${d.getFullYear()}`;
         break;
+      case 'dd-mmm-yyyy':
+        str = `${pad(d.getDate())}-${months[d.getMonth()]}-${d.getFullYear()}`;
+        break;
+      case 'mmm-dd-yyyy':
+        str = `${months[d.getMonth()]}-${pad(d.getDate())}-${d.getFullYear()}`;
+        break;
+      default:
+        str = `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
     }
-    if (this.showTimePicker)
-      str += ` ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    
+    if (this.showTimePicker) {
+      if (this.timeFormatOption === '12hr') {
+        const hours12 = this.hours === 0 ? 12 : (this.hours > 12 ? this.hours - 12 : this.hours);
+        const ampm = this.hours >= 12 ? 'PM' : 'AM';
+        str += ` ${pad(hours12)}:${pad(d.getMinutes())} ${ampm}`;
+      } else {
+        str += ` ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+    }
+    
     return str;
   }
   formatDateRange(range: DateRange): string {
@@ -466,15 +500,56 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   }
   parseDate(val: string | Date): Date | null {
     try {
-      if (val instanceof Date) return new Date(val.getTime()); // Create a clone to prevent mutation
+      if (val instanceof Date) return new Date(val.getTime());
       if (!val) return null;
       
+      // Handle month name formats
+      const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      
+      if (this.dateFormat === 'dd-mmm-yyyy' || this.dateFormat === 'mmm-dd-yyyy') {
+        const parts = val.split('-');
+        if (parts.length !== 3) return null;
+        
+        let day: number, monthStr: string, year: number;
+        
+        if (this.dateFormat === 'dd-mmm-yyyy') {
+          day = parseInt(parts[0], 10);
+          monthStr = parts[1].toLowerCase();
+          year = parseInt(parts[2], 10);
+        } else { // mmm-dd-yyyy
+          monthStr = parts[0].toLowerCase();
+          day = parseInt(parts[1], 10);
+          year = parseInt(parts[2], 10);
+        }
+        
+        const monthIndex = months.indexOf(monthStr.substring(0, 3));
+        if (monthIndex === -1) return null;
+        
+        const date = new Date(year, monthIndex, day);
+        
+        // Parse time if present
+        let timeMatch = val.match(/(\d{1,2}):(\d{1,2})/);
+        if (timeMatch) {
+          const hours = parseInt(timeMatch[1], 10);
+          const minutes = parseInt(timeMatch[2], 10);
+          if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
+            date.setHours(hours, minutes, 0, 0);
+          }
+        }
+        
+        return isNaN(date.getTime()) ? null : date;
+      }
+      
+      // Handle regular formats with regex
       let re, parts;
       switch (this.dateFormat) {
         case 'dd-mm-yyyy':
           re = /^(\d{1,2})-(\d{1,2})-(\d{4})$/;
           break;
         case 'dd/mm/yyyy':
+          re = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+          break;
+        case 'mm/dd/yyyy':
           re = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
           break;
         case 'mm-dd-yyyy':
@@ -488,8 +563,16 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       if (!parts) return null;
       
       let [, d1, d2, y] = parts;
-      let dd = parseInt(this.dateFormat.startsWith('dd') ? d1 : d2, 10);
-      let mm = parseInt(this.dateFormat.startsWith('dd') ? d2 : d1, 10) - 1;
+      let dd: number, mm: number;
+      
+      if (this.dateFormat === 'dd-mm-yyyy' || this.dateFormat === 'dd/mm/yyyy') {
+        dd = parseInt(d1, 10);
+        mm = parseInt(d2, 10) - 1;
+      } else { // mm-dd-yyyy or mm/dd/yyyy
+        mm = parseInt(d1, 10) - 1;
+        dd = parseInt(d2, 10);
+      }
+      
       let yyyy = parseInt(y, 10);
       
       // Basic date validation
@@ -641,24 +724,96 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  getSelectedDateForEmit(): DateOrRange {
-    if (this.enableDateRangeSelection) return this.selected;
-    if (this.selected instanceof Date) {
-      let d = new Date(this.selected);
-      if (this.showTimePicker) d.setHours(this.hours, this.minutes, 0, 0);
-      return d;
+  toggleFormatSettings() {
+    this.showFormatSettings = !this.showFormatSettings;
+    this.cdr.markForCheck();
+  }
+
+  setDateFormat(format: 'dd-mm-yyyy' | 'dd/mm/yyyy' | 'mm-dd-yyyy') {
+    this.dateFormat = format;
+    if (this.selected) {
+      if (this.enableDateRangeSelection && this.selected && typeof this.selected === 'object' && 'from' in this.selected) {
+        this.displayValue = this.formatDateRange(this.selected as DateRange);
+      } else if (this.selected instanceof Date) {
+        this.displayValue = this.formatDate(this.selected);
+      }
+      this.inputControl.setValue(this.displayValue, { emitEvent: false });
     }
-    return null;
+    this.cdr.markForCheck();
   }
 
-  trackByWeekIndex(index: number): number {
-    return index;
+  // Add this new method to handle the string to literal type conversion
+  setDateFormatFromString(formatStr: string) {
+    if (this.availableDateFormats.includes(formatStr)) {
+      // We need to handle the new formats like dd-mmm-yyyy
+      this.dateFormat = formatStr as any; // Using 'any' here as we're expanding beyond the original types
+      if (this.selected) {
+        if (this.enableDateRangeSelection && this.selected && typeof this.selected === 'object' && 'from' in this.selected) {
+          this.displayValue = this.formatDateRange(this.selected as DateRange);
+        } else if (this.selected instanceof Date) {
+          this.displayValue = this.formatDate(this.selected);
+        }
+        this.inputControl.setValue(this.displayValue, { emitEvent: false });
+      }
+      this.cdr.markForCheck();
+    }
   }
 
-  trackByDayDate(index: number, day: CalendarDay): string {
-    return `${day.date.getFullYear()}-${day.date.getMonth()}-${day.date.getDate()}`;
+  toggleTimeDisplay() {
+    this.showTimePicker = this.showTimeOption;
+    if (this.showTimePicker && this.selected instanceof Date) {
+      const now = new Date();
+      this.hours = now.getHours();
+      this.minutes = now.getMinutes();
+      if (this.selected) {
+        this.selected.setHours(this.hours, this.minutes, 0, 0);
+        this.displayValue = this.formatDate(this.selected);
+        this.inputControl.setValue(this.displayValue, { emitEvent: false });
+      }
+    }
+    this.cdr.markForCheck();
   }
 
+  setTimeFormat(format: '12hr' | '24hr') {
+    this.timeFormatOption = format;
+    this.cdr.markForCheck();
+  }
+
+  // Convert 24hr to 12hr format
+  get hours12(): number {
+    if (this.hours === 0) return 12;
+    return this.hours > 12 ? this.hours - 12 : this.hours;
+  }
+
+  // Get AM/PM value
+  get amPm(): 'AM' | 'PM' {
+    return this.hours >= 12 ? 'PM' : 'AM';
+  }
+
+  // Set hours with AM/PM consideration
+  setHours12(value: number) {
+    const h = parseInt(value.toString(), 10);
+    if (isNaN(h)) return;
+    
+    if (this.amPm === 'AM') {
+      this.hours = h === 12 ? 0 : h;
+    } else {
+      this.hours = h === 12 ? 12 : h + 12;
+    }
+    this.onTimeChange();
+  }
+
+  // Set AM/PM and update hours accordingly
+  setAmPm(value: 'AM' | 'PM') {
+    if (value === 'AM' && this.hours >= 12) {
+      this.hours = this.hours === 12 ? 0 : this.hours - 12;
+    } else if (value === 'PM' && this.hours < 12) {
+      this.hours = this.hours === 0 ? 12 : this.hours + 12;
+    }
+    this.onTimeChange();
+  }
+
+  // Track functions for NgFor optimization
   trackByMonthIndex(index: number): number {
     return index;
   }
@@ -667,11 +822,37 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     return year;
   }
 
-  // Add will-change to optimize animations
-  ngAfterViewInit() {
-    if (this.popupRef && this.popupRef.nativeElement) {
-      this.renderer.setStyle(this.popupRef.nativeElement, 'will-change', 'transform, opacity');
+  trackByWeekIndex(index: number): number {
+    return index;
+  }
+
+  trackByDayDate(index: number, day: CalendarDay): number {
+    return day.date.getTime();
+  }
+
+  // Return the selected date in the appropriate format for the emitter
+  getSelectedDateForEmit(): DateOrRange {
+    if (this.enableDateRangeSelection && this.selected && typeof this.selected === 'object' && 'from' in this.selected) {
+      return this.selected;
+    } else if (this.selected instanceof Date) {
+      return new Date(this.selected);
     }
+    return null;
+  }
+
+  toggleFormatChange() {
+    if (!this.enableFormatChange) {
+      // Reset to default format when unchecked
+      this.dateFormat = 'dd-mm-yyyy';
+      
+      // Update display if a date is selected
+      if (this.selected instanceof Date) {
+        this.displayValue = this.formatDate(this.selected);
+        this.inputControl.setValue(this.displayValue, { emitEvent: false });
+      }
+    }
+    
+    this.cdr.markForCheck();
   }
 }
 
