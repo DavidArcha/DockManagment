@@ -104,4 +104,19 @@ export class DatePickerDemoComponent {
       this.eventLogs.pop();
     }
   }
+
+  // In your parent component
+  onFormattedDateReceived(formattedDate: string) {
+    console.log('Received formatted date:', formattedDate);
+    // Now you have the exact string format that's displayed in the input
+  }
+
+  /**
+   * Handles date selection for format1 date picker
+   * @param date - The selected date or date range
+   */
+  onDateSelected(date: DateOrRange) {
+    // Call the existing method with a default source
+    this.onSelectedDate(date, 'format1');
+  }
 }

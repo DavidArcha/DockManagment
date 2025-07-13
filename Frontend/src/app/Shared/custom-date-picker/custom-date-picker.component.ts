@@ -35,7 +35,8 @@ const DAYS = {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
-  @Input() dateFormat: 'dd-mm-yyyy' | 'dd/mm/yyyy' | 'mm/dd/yyyy' | 'mm-dd-yyyy' | 'dd-mmm-yyyy' | 'mmm-dd-yyyy' = 'dd-mm-yyyy';
+  // Update the dateFormat Input type to support all formats
+  @Input() dateFormat: string = 'dd-mm-yyyy';
   @Input() initialDate: string | Date | DateRange | null = null;
   @Input() enableDateRangeSelection = false;
   @Input() showTimePicker = false;
@@ -47,6 +48,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   @Input() language: 'en' | 'de' = 'de';
   @Input() customErrorMessage: string | null = null;
   @Output() selectedDate = new EventEmitter<DateOrRange>();
+  @Output() formattedDateStr = new EventEmitter<string>();  // Add this line
   @Output() opened = new EventEmitter<void>();
   @Output() closed = new EventEmitter<void>();
 
@@ -79,11 +81,36 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   // New properties for format settings
   showFormatSettings = false;
   availableDateFormats = [
-    'dd-mm-yyyy', 
-    'dd/mm/yyyy', 
-    'mm/dd/yyyy', 
+    // Day-Month-Year formats
+    'dd-mm-yyyy',
+    'dd/mm/yyyy',
+    'dd.mm.yyyy',
+    'dd mmm yyyy',
     'dd-mmm-yyyy',
-    'mmm-dd-yyyy'
+    'dd mmmm yyyy',
+    'dd-mmmm-yyyy',
+    
+    // Month-Day-Year formats
+    'mm-dd-yyyy',
+    'mm/dd/yyyy',
+    'mm.dd.yyyy',
+    'mmm dd yyyy',
+    'mmm-dd-yyyy',
+    'mmmm dd yyyy',
+    'mmmm-dd-yyyy',
+    
+    // Year-Month-Day formats (including ISO)
+    'yyyy-mm-dd',
+    'yyyy/mm/dd',
+    'yyyy.mm.dd',
+    
+    // Short year formats
+    'dd-mm-yy',
+    'dd/mm/yy',
+    'mm-dd-yy',
+    'mm/dd/yy',
+    'yy-mm-dd',
+    'yy/mm/dd'
   ];
   timeFormatOption: '12hr' | '24hr' = '24hr';
   showTimeOption = false;
@@ -401,6 +428,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
         this.rangeStep = 'start';
         this.displayValue = this.formatDateRange(this.selected as DateRange);
         this.selectedDate.emit(this.selected);
+        this.formattedDateStr.emit(this.displayValue); // Add this line
         if (this.closeOnSelect) this.closePopup();
       }
     } else {
@@ -408,6 +436,8 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       this.displayValue = this.formatDate(d);
       this.inputControl.setValue(this.displayValue, { emitEvent: false });
       this.selectedDate.emit(this.getSelectedDateForEmit());
+      this.formattedDateStr.emit(this.displayValue); // Add this line
+      console.log('Selected date (formatted):', this.displayValue); // Add console log
       if (this.closeOnSelect) this.closePopup();
     }
     this.buildCalendar();
@@ -420,6 +450,8 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       this.displayValue = this.formatDate(this.selected);
       this.inputControl.setValue(this.displayValue, { emitEvent: false });
       this.selectedDate.emit(this.getSelectedDateForEmit());
+      this.formattedDateStr.emit(this.displayValue); // Add this line
+      console.log('Selected date with time (formatted):', this.displayValue); // Add console log
     }
   }
 
@@ -436,9 +468,11 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       }
       this.selected = now;
       this.displayValue = this.formatDate(now);
+      this.inputControl.setValue(this.displayValue, { emitEvent: false });
+      this.selectedDate.emit(this.getSelectedDateForEmit());
+      this.formattedDateStr.emit(this.displayValue); // Add this line
+      console.log('Today selected (formatted):', this.displayValue); // Add console log
     }
-    this.inputControl.setValue(this.displayValue, { emitEvent: false });
-    this.selectedDate.emit(this.getSelectedDateForEmit());
     this.closePopup();
     this.buildCalendar();
   }
@@ -453,42 +487,89 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     this.buildCalendar();
   }
 
-  // Helpers
+  // Enhanced formatDate method to handle all formats
   formatDate(d: Date): string {
     const pad = (n: number) => n < 10 ? '0' + n : n;
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const fullMonths = this.language === 'de' ? 
+      ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'] :
+      ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    const day = pad(d.getDate());
+    const month = pad(d.getMonth() + 1);
+    const shortMonth = shortMonths[d.getMonth()];
+    const fullMonth = fullMonths[d.getMonth()];
+    const fullYear = d.getFullYear();
+    const shortYear = d.getFullYear() % 100;
+    
     let str = '';
     
-    switch (this.dateFormat) {
-      case 'dd-mm-yyyy':
-        str = `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
-        break;
-      case 'dd/mm/yyyy':
-        str = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
-        break;
-      case 'mm/dd/yyyy':
-        str = `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`;
-        break;
-      case 'mm-dd-yyyy':
-        str = `${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${d.getFullYear()}`;
-        break;
-      case 'dd-mmm-yyyy':
-        str = `${pad(d.getDate())}-${months[d.getMonth()]}-${d.getFullYear()}`;
-        break;
-      case 'mmm-dd-yyyy':
-        str = `${months[d.getMonth()]}-${pad(d.getDate())}-${d.getFullYear()}`;
-        break;
-      default:
-        str = `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
+    // Parse the format and replace parts
+    const format = this.dateFormat.toLowerCase();
+    
+    if (format.includes('mmmm')) {
+      // Full month name formats
+      if (format.startsWith('mmmm')) {
+        // Month first
+        if (format.includes(' ')) {
+          str = `${fullMonth} ${day} ${fullYear}`;
+        } else {
+          str = `${fullMonth}-${day}-${fullYear}`;
+        }
+      } else {
+        // Day first
+        if (format.includes(' ')) {
+          str = `${day} ${fullMonth} ${fullYear}`;
+        } else {
+          str = `${day}-${fullMonth}-${fullYear}`;
+        }
+      }
+    } else if (format.includes('mmm')) {
+      // Short month name formats
+      if (format.startsWith('mmm')) {
+        // Month first
+        if (format.includes(' ')) {
+          str = `${shortMonth} ${day} ${fullYear}`;
+        } else {
+          str = `${shortMonth}-${day}-${fullYear}`;
+        }
+      } else {
+        // Day first
+        if (format.includes(' ')) {
+          str = `${day} ${shortMonth} ${fullYear}`;
+        } else {
+          str = `${day}-${shortMonth}-${fullYear}`;
+        }
+      }
+    } else {
+      // Numeric formats
+      const separator = format.includes('-') ? '-' : format.includes('/') ? '/' : format.includes('.') ? '.' : '-';
+      const useShortYear = format.includes('yy') && !format.includes('yyyy');
+      const year = useShortYear ? pad(shortYear) : fullYear;
+      
+      if (format.startsWith('yyyy') || format.startsWith('yy')) {
+        // Year first (ISO-like)
+        str = `${year}${separator}${month}${separator}${day}`;
+      } else if (format.startsWith('mm')) {
+        // Month first (US-like)
+        str = `${month}${separator}${day}${separator}${year}`;
+      } else {
+        // Day first (European-like)
+        str = `${day}${separator}${month}${separator}${year}`;
+      }
     }
     
+    // Add time if enabled
     if (this.showTimePicker) {
+      const padHours = (n: number) => n < 10 ? '0' + n : n;
+      const padMinutes = (n: number) => n < 10 ? '0' + n : n;
+      
       if (this.timeFormatOption === '12hr') {
         const hours12 = this.hours === 0 ? 12 : (this.hours > 12 ? this.hours - 12 : this.hours);
         const ampm = this.hours >= 12 ? 'PM' : 'AM';
-        str += ` ${pad(hours12)}:${pad(d.getMinutes())} ${ampm}`;
+        str += ` ${padHours(hours12)}:${padMinutes(this.minutes)} ${ampm}`;
       } else {
-        str += ` ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        str += ` ${padHours(this.hours)}:${padMinutes(this.minutes)}`;
       }
     }
     
@@ -498,105 +579,138 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     if (!range.from || !range.to) return '';
     return `${this.formatDate(range.from)} to ${this.formatDate(range.to)}`;
   }
+  // Enhanced parseDate method to handle all formats
   parseDate(val: string | Date): Date | null {
     try {
       if (val instanceof Date) return new Date(val.getTime());
       if (!val) return null;
       
-      // Handle month name formats
-      const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      const format = this.dateFormat.toLowerCase();
+      const shortMonths = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      const fullMonths = this.language === 'de' ? 
+        ['januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember'] :
+        ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+    
+    // Extract time portion if present
+    let timePortion = '';
+    let datePortion = val;
+    
+    if (val.includes(' ')) {
+      const parts = val.split(' ');
+      datePortion = parts[0];
+      timePortion = parts.slice(1).join(' ');
+    }
+    
+    let day: number, month: number, year: number;
+    
+    // Handle text month formats
+    if (format.includes('mmmm') || format.includes('mmm')) {
+      // Determine separator
+      const separator = format.includes('-') ? '-' : format.includes('/') ? '/' : format.includes('.') ? '.' : ' ';
+      const parts = datePortion.split(separator);
       
-      if (this.dateFormat === 'dd-mmm-yyyy' || this.dateFormat === 'mmm-dd-yyyy') {
-        const parts = val.split('-');
-        if (parts.length !== 3) return null;
-        
-        let day: number, monthStr: string, year: number;
-        
-        if (this.dateFormat === 'dd-mmm-yyyy') {
-          day = parseInt(parts[0], 10);
-          monthStr = parts[1].toLowerCase();
-          year = parseInt(parts[2], 10);
-        } else { // mmm-dd-yyyy
-          monthStr = parts[0].toLowerCase();
-          day = parseInt(parts[1], 10);
-          year = parseInt(parts[2], 10);
-        }
-        
-        const monthIndex = months.indexOf(monthStr.substring(0, 3));
-        if (monthIndex === -1) return null;
-        
-        const date = new Date(year, monthIndex, day);
-        
-        // Parse time if present
-        let timeMatch = val.match(/(\d{1,2}):(\d{1,2})/);
-        if (timeMatch) {
-          const hours = parseInt(timeMatch[1], 10);
-          const minutes = parseInt(timeMatch[2], 10);
-          if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
-            date.setHours(hours, minutes, 0, 0);
-          }
-        }
-        
-        return isNaN(date.getTime()) ? null : date;
+      if (parts.length !== 3) return null;
+      
+      // Check if month is first or second part
+      const isMonthFirst = format.startsWith('mmm');
+      const monthText = isMonthFirst ? parts[0].toLowerCase() : parts[1].toLowerCase();
+      const dayText = isMonthFirst ? parts[1] : parts[0];
+      const yearText = parts[2];
+      
+      // Try to match with short month names first
+      let monthIndex = shortMonths.findIndex(m => monthText.startsWith(m));
+      
+      // If not found, try full month names
+      if (monthIndex === -1) {
+        monthIndex = fullMonths.findIndex(m => monthText.startsWith(m.substring(0, 3)));
       }
       
-      // Handle regular formats with regex
-      let re, parts;
-      switch (this.dateFormat) {
-        case 'dd-mm-yyyy':
-          re = /^(\d{1,2})-(\d{1,2})-(\d{4})$/;
-          break;
-        case 'dd/mm/yyyy':
-          re = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-          break;
-        case 'mm/dd/yyyy':
-          re = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-          break;
-        case 'mm-dd-yyyy':
-          re = /^(\d{1,2})-(\d{1,2})-(\d{4})$/;
-          break;
-        default:
-          return null;
+      if (monthIndex === -1) return null;
+      
+      day = parseInt(dayText, 10);
+      month = monthIndex;
+      year = parseInt(yearText, 10);
+      
+      if (year < 100) {
+        // Handle 2-digit years
+        const currentYear = new Date().getFullYear();
+        const century = Math.floor(currentYear / 100) * 100;
+        year = year + century;
+        if (year > currentYear + 20) year -= 100; // Assume dates within 20 years in the future, otherwise previous century
+      }
+    } else {
+      // Handle numeric formats
+      let separator = '';
+      if (datePortion.includes('-')) separator = '-';
+      else if (datePortion.includes('/')) separator = '/';
+      else if (datePortion.includes('.')) separator = '.';
+      else return null;
+      
+      const parts = datePortion.split(separator);
+      if (parts.length !== 3) return null;
+      
+      let firstPart = parseInt(parts[0], 10);
+      let secondPart = parseInt(parts[1], 10);
+      let thirdPart = parseInt(parts[2], 10);
+      
+      // Determine format pattern
+      if (format.startsWith('yyyy') || format.startsWith('yy')) {
+        // Year first (ISO-like)
+        year = firstPart;
+        month = secondPart - 1;
+        day = thirdPart;
+      } else if (format.startsWith('mm')) {
+        // Month first (US-like)
+        month = firstPart - 1;
+        day = secondPart;
+        year = thirdPart;
+      } else {
+        // Day first (European-like)
+        day = firstPart;
+        month = secondPart - 1;
+        year = thirdPart;
       }
       
-      parts = re.exec(val);
-      if (!parts) return null;
-      
-      let [, d1, d2, y] = parts;
-      let dd: number, mm: number;
-      
-      if (this.dateFormat === 'dd-mm-yyyy' || this.dateFormat === 'dd/mm/yyyy') {
-        dd = parseInt(d1, 10);
-        mm = parseInt(d2, 10) - 1;
-      } else { // mm-dd-yyyy or mm/dd/yyyy
-        mm = parseInt(d1, 10) - 1;
-        dd = parseInt(d2, 10);
+      if (year < 100) {
+        // Handle 2-digit years
+        const currentYear = new Date().getFullYear();
+        const century = Math.floor(currentYear / 100) * 100;
+        year = year + century;
+        if (year > currentYear + 20) year -= 100;
       }
-      
-      let yyyy = parseInt(y, 10);
-      
-      // Basic date validation
-      if (mm < 0 || mm > 11) return null;
-      if (dd < 1 || dd > new Date(yyyy, mm + 1, 0).getDate()) return null;
-      
-      let dateObj = new Date(yyyy, mm, dd);
-      
-      // Parse time if present
-      let timeMatch = val.match(/(\d{1,2}):(\d{1,2})/);
+    }
+    
+    // Basic validation
+    if (month < 0 || month > 11) return null;
+    if (day < 1 || day > new Date(year, month + 1, 0).getDate()) return null;
+    
+    const dateObj = new Date(year, month, day);
+    
+    // Parse time if present
+    if (timePortion) {
+      const timeMatch = timePortion.match(/(\d{1,2}):(\d{1,2})(?:\s*(am|pm))?/i);
       if (timeMatch) {
-        const hours = parseInt(timeMatch[1], 10);
+        let hours = parseInt(timeMatch[1], 10);
         const minutes = parseInt(timeMatch[2], 10);
+        const ampm = timeMatch[3] ? timeMatch[3].toLowerCase() : null;
+        
+        if (ampm) {
+          if (ampm === 'pm' && hours < 12) hours += 12;
+          else if (ampm === 'am' && hours === 12) hours = 0;
+        }
+        
         if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
           dateObj.setHours(hours, minutes, 0, 0);
         }
       }
-      
-      return isNaN(dateObj.getTime()) ? null : dateObj;
-    } catch (err) {
-      console.error('Error parsing date:', err);
-      return null;
     }
+    
+    return isNaN(dateObj.getTime()) ? null : dateObj;
+  } catch (err) {
+    console.error('Error parsing date:', err);
+    return null;
   }
+}
 
   isDateEnabled(d: Date): boolean {
     // Add null/undefined check at the beginning
@@ -684,14 +798,39 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  // Input placeholder
+  // Enhanced getPlaceholder method for all formats
   getPlaceholder(): string {
-    switch (this.dateFormat) {
-      case 'dd-mm-yyyy': return '__-__-____';
-      case 'dd/mm/yyyy': return '__/__/____';
-      case 'mm-dd-yyyy': return '__-__-____';
+    const format = this.dateFormat.toLowerCase();
+    
+    // Handle text month formats
+    if (format.includes('mmmm')) {
+      if (format.startsWith('mmmm')) {
+        return format.includes(' ') ? 'Month Day Year' : 'Month-Day-Year';
+      } else {
+        return format.includes(' ') ? 'Day Month Year' : 'Day-Month-Year';
+      }
+    } else if (format.includes('mmm')) {
+      if (format.startsWith('mmm')) {
+        return format.includes(' ') ? 'Mon Day Year' : 'Mon-Day-Year';
+      } else {
+        return format.includes(' ') ? 'Day Mon Year' : 'Day-Mon-Year';
+      }
+    } else {
+      // Handle numeric formats
+      const separator = format.includes('-') ? '-' : format.includes('/') ? '/' : format.includes('.') ? '.' : '-';
+      const yearPlaceholder = format.includes('yyyy') ? '____' : '__';
+      
+      if (format.startsWith('yyyy') || format.startsWith('yy')) {
+        // Year first (ISO)
+        return `${yearPlaceholder}${separator}__${separator}__`;
+      } else if (format.startsWith('mm')) {
+        // Month first (US)
+        return `__${separator}__${separator}${yearPlaceholder}`;
+      } else {
+        // Day first (European)
+        return `__${separator}__${separator}${yearPlaceholder}`;
+      }
     }
-    return '__-__-____';
   }
 
   // Month/Year dropdown arrays

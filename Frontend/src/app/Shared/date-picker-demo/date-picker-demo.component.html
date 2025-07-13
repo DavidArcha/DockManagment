@@ -20,7 +20,8 @@
     <p class="instruction">Format: dd-mm-yyyy (default)</p>
     <app-custom-date-picker 
       [dateFormat]="'dd-mm-yyyy'"
-      (selectedDate)="onSelectedDate($event, 'format1')">
+      (selectedDate)="onSelectedDate($event, 'format1')"
+      (formattedDateStr)="onFormattedDateReceived($event)">
     </app-custom-date-picker>
     
     <p class="instruction">Format: dd/mm/yyyy</p>
