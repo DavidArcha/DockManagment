@@ -1,13 +1,8 @@
 <div class="cdp-root" tabindex="-1" [class.cdp-open]="isOpen">
   <div class="cdp-input-wrap">
-    <input #inputRef type="text" class="cdp-input" 
-      [placeholder]="getPlaceholder()" 
-      [formControl]="inputControl"
-      [attr.aria-label]="language === 'de' ? 'Datum auswählen' : 'Pick a date'" 
-      [title]="getTooltip()"
-      (focus)="openPopup()"
-      (click)="openPopup()" 
-      autocomplete="off" />
+    <input #inputRef type="text" class="cdp-input" [placeholder]="getPlaceholder()" [formControl]="inputControl"
+      [attr.aria-label]="language === 'de' ? 'Datum auswählen' : 'Pick a date'" [title]="getTooltip()"
+      (focus)="openPopup()" (click)="openPopup()" autocomplete="off" />
     <span class="cdp-calendar-icon" role="button" tabindex="0" aria-label="Open calendar"
       (click)="togglePopup()">&#128197;</span>
     <span class="cdp-settings-icon" role="button" tabindex="0" aria-label="Format settings"
@@ -35,13 +30,9 @@
     </div>
     <div class="cdp-weeks">
       <div *ngFor="let week of calendarWeeks; trackBy: trackByWeekIndex" class="cdp-week">
-        <span *ngFor="let cell of week; trackBy: trackByDayDate" class="cdp-day-cell" 
-          [class.today]="cell.isToday"
-          [class.selected]="cell.isSelected" 
-          [class.in-range]="cell.isInRange" 
-          [class.disabled]="cell.disabled"
-          [class.other-month]="cell.isOtherMonth"
-          tabindex="0" (click)="selectDateCell(cell)">
+        <span *ngFor="let cell of week; trackBy: trackByDayDate" class="cdp-day-cell" [class.today]="cell.isToday"
+          [class.selected]="cell.isSelected" [class.in-range]="cell.isInRange" [class.disabled]="cell.disabled"
+          [class.other-month]="cell.isOtherMonth" tabindex="0" (click)="selectDateCell(cell)">
           {{ cell.label }}
         </span>
       </div>
@@ -51,12 +42,10 @@
     <div *ngIf="showFormatSettings" class="cdp-format-settings">
       <div class="cdp-settings-section">
         <div class="cdp-checkbox-wrap">
-          <input type="checkbox" id="enable-format" 
-                 [(ngModel)]="enableFormatChange" 
-                 (change)="toggleFormatChange()" />
+          <input type="checkbox" id="enable-format" [(ngModel)]="enableFormatChange" (change)="toggleFormatChange()" />
           <label for="enable-format">{{ language === 'de' ? 'Datumsformat ändern:' : 'Change Date Format:' }}</label>
         </div>
-        
+
         <div *ngIf="enableFormatChange" class="cdp-format-dropdown">
           <select [ngModel]="dateFormat" (ngModelChange)="setDateFormatFromString($event)" class="cdp-format-select">
             <option *ngFor="let format of availableDateFormats" [value]="format">
@@ -65,27 +54,23 @@
           </select>
         </div>
       </div>
-      
+
       <div class="cdp-settings-section">
         <div class="cdp-settings-title">{{ language === 'de' ? 'Zeitoptionen' : 'Time Options' }}</div>
         <div class="cdp-checkbox-wrap">
-          <input type="checkbox" id="show-time" 
-                 [(ngModel)]="showTimeOption" 
-                 (change)="toggleTimeDisplay()" />
+          <input type="checkbox" id="show-time" [(ngModel)]="showTimeOption" (change)="toggleTimeDisplay()" />
           <label for="show-time">{{ language === 'de' ? 'Zeit anzeigen' : 'Display Time' }}</label>
         </div>
-        
+
         <div *ngIf="showTimeOption" class="cdp-time-format-options">
           <div class="cdp-radio-wrap">
-            <input type="radio" id="24hr-format" name="timeFormat" 
-                  [checked]="timeFormatOption === '24hr'"
-                  (change)="setTimeFormat('24hr')" />
+            <input type="radio" id="24hr-format" name="timeFormat" [checked]="timeFormatOption === '24hr'"
+              (change)="setTimeFormat('24hr')" />
             <label for="24hr-format">{{ language === 'de' ? '24 Stunden' : '24 Hours' }}</label>
           </div>
           <div class="cdp-radio-wrap">
-            <input type="radio" id="12hr-format" name="timeFormat"
-                  [checked]="timeFormatOption === '12hr'"
-                  (change)="setTimeFormat('12hr')" />
+            <input type="radio" id="12hr-format" name="timeFormat" [checked]="timeFormatOption === '12hr'"
+              (change)="setTimeFormat('12hr')" />
             <label for="12hr-format">{{ language === 'de' ? 'AM/PM' : 'AM/PM' }}</label>
           </div>
         </div>
@@ -99,10 +84,11 @@
         <input type="number" min="0" max="23" [(ngModel)]="hours" (change)="onTimeChange()" aria-label="Hours" /> :
         <input type="number" min="0" max="59" [(ngModel)]="minutes" (change)="onTimeChange()" aria-label="Minutes" />
       </ng-container>
-      
+
       <!-- 12-hour format with AM/PM -->
       <ng-container *ngIf="timeFormatOption === '12hr'">
-        <input type="number" min="1" max="12" [ngModel]="hours12" (ngModelChange)="setHours12($event)" aria-label="Hours" /> :
+        <input type="number" min="1" max="12" [ngModel]="hours12" (ngModelChange)="setHours12($event)"
+          aria-label="Hours" /> :
         <input type="number" min="0" max="59" [(ngModel)]="minutes" (change)="onTimeChange()" aria-label="Minutes" />
         <select [ngModel]="amPm" (ngModelChange)="setAmPm($event)" aria-label="AM/PM">
           <option value="AM">AM</option>
@@ -110,12 +96,14 @@
         </select>
       </ng-container>
     </div>
-    
+
     <div class="cdp-footer">
       <button type="button" class="cdp-link" (click)="setToday()">{{ language === 'de' ? 'Heute' : 'Today' }}</button>
-      <button type="button" class="cdp-link" (click)="clearValue()">{{ language === 'de' ? 'Löschen' : 'Clear' }}</button>
+      <button type="button" class="cdp-link" (click)="clearValue()">{{ language === 'de' ? 'Löschen' : 'Clear'
+        }}</button>
       <button type="button" class="cdp-link" (click)="toggleFormatSettings()">
-        {{ showFormatSettings ? (language === 'de' ? 'Schließen' : 'Close') : (language === 'de' ? 'Formatoptionen' : 'Format Options') }}
+        {{ showFormatSettings ? (language === 'de' ? 'Schließen' : 'Close') : (language === 'de' ? 'Formatoptionen' :
+        'Format Options') }}
       </button>
     </div>
   </div>
