@@ -5,8 +5,6 @@
       (focus)="openPopup()" (click)="openPopup()" autocomplete="off" />
     <span class="cdp-calendar-icon" role="button" tabindex="0" aria-label="Open calendar"
       (click)="togglePopup()">&#128197;</span>
-    <span class="cdp-settings-icon" role="button" tabindex="0" aria-label="Format settings"
-      (click)="toggleFormatSettings()">⚙️</span>
   </div>
   <div *ngIf="errorMsg" class="cdp-error" aria-live="polite">
     {{ errorMsg }}
