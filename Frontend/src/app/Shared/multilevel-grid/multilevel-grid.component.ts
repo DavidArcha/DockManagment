@@ -1,5 +1,5 @@
-import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import { Component, OnInit, Input, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
+import { ModuleRegistry, AllCommunityModule, createGrid, GridApi, GridOptions } from 'ag-grid-community';
 
 // Register AG Grid modules
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -10,37 +10,219 @@ ModuleRegistry.registerModules([AllCommunityModule]);
   templateUrl: './multilevel-grid.component.html',
   styleUrl: './multilevel-grid.component.scss'
 })
-export class MultilevelGridComponent implements OnInit {
+export class MultilevelGridComponent implements OnInit, OnChanges, OnDestroy {
   @Input() gridData: any[] = [];
+  
+  rowData: any[] = [];
+  originalData: any[] = [];
+  nestedGrids: Map<string, GridApi> = new Map(); // Track nested grid instances
 
   columnDefs = [
-    { field: 'label', headerName: 'Date', flex: 1 }
+    { 
+      field: 'label', 
+      headerName: '', 
+      flex: 1,
+      cellRenderer: (params: any) => {
+        if (params.data.isParent) {
+          const expanded = params.data.expanded || false;
+          const arrow = expanded ? '▼' : '▶';
+          return `<span style="cursor: pointer; user-select: none; font-weight: bold; font-size: 14px;">${arrow} ${params.data.label}</span>`;
+        } else if (params.data.isChildTable) {
+          // Create a unique ID for this nested grid
+          const gridId = `nested-grid-${params.data.parentId}`;
+          
+          // Return a div that will contain the nested AG Grid
+          setTimeout(() => {
+            this.createNestedGrid(gridId, params.data.children);
+          }, 0);
+          
+          return `<div id="${gridId}" style="margin-left: 10px; padding: 5px; width: calc(100% - 20px); max-width: 800px;"></div>`;
+        }
+        return '';
+      }
+    }
   ];
 
-  gridOptions: any = {};
+  gridOptions: any = {
+    theme: 'legacy',
+    pagination: true,
+    paginationPageSize: 10,
+    suppressRowClickSelection: true,
+    headerHeight: 0,
+    getRowHeight: (params: any) => {
+      if (params.data.isParent) {
+        return 40; // Parent row height
+      } else if (params.data.isChildTable) {
+        // Calculate height based on number of children + headers + padding
+        const childCount = params.data.children ? params.data.children.length : 0;
+        return Math.max(120, 50 + (childCount * 40) + 35); // Base height + children rows + header
+      }
+      return 50; // Default height
+    },
+    onRowClicked: (event: any) => {
+      console.log('Row clicked:', event.data);
+      if (event.data.isParent) {
+        this.toggleRow(event.data.id);
+      }
+    }
+  };
 
   ngOnInit() {
-    this.gridOptions = {
-      pagination: true,
-      paginationPageSize: 5,
-      masterDetail: true,
-      detailCellRendererParams: {
-        detailGridOptions: {
-          columnDefs: [
-            { field: 'name', headerName: 'Name', flex: 1 },
-            { field: 'type', headerName: 'Type', width: 100 }
-          ],
-          pagination: true,
-          paginationPageSize: 2
-        },
-        getDetailRowData: (params: any) => {
-          params.successCallback(params.data.children);
-        }
-      }
+    this.initializeData();
+    
+    // Make button handler available globally
+    (window as any).handleNestedGridAction = (name: string, type: string) => {
+      this.handleNestedGridAction(name, type);
     };
   }
 
-  get rowData() {
-    return this.gridData;
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['gridData'] && changes['gridData'].currentValue) {
+      this.initializeData();
+    }
+  }
+
+  private initializeData() {
+    this.originalData = [...this.gridData];
+    this.rowData = this.getDisplayData();
+    console.log('Initialized rowData:', this.rowData);
+  }
+
+  private getDisplayData(): any[] {
+    const result: any[] = [];
+    
+    this.originalData.forEach((parent) => {
+      // Add parent row - only show label
+      const parentRow = {
+        id: parent.id,
+        label: parent.label,
+        isParent: true,
+        expanded: false,
+        children: parent.children
+      };
+      result.push(parentRow);
+    });
+    
+    return result;
+  }
+
+  toggleRow(id: number): void {
+    console.log('Toggle row called for ID:', id);
+    
+    // Find the parent row and toggle its expanded state
+    const parentIndex = this.rowData.findIndex(row => row.isParent && row.id === id);
+    if (parentIndex === -1) return;
+    
+    const parentRow = this.rowData[parentIndex];
+    parentRow.expanded = !parentRow.expanded;
+    
+    console.log('Parent row expanded state:', parentRow.expanded);
+    
+    // Remove any existing child table for this parent
+    const newRowData = this.rowData.filter(row => 
+      !(row.parentId === id && row.isChildTable)
+    );
+    
+    // If expanding, insert child table after the parent
+    if (parentRow.expanded && parentRow.children && parentRow.children.length > 0) {
+      const childTableRow = {
+        isChildTable: true,
+        parentId: id,
+        children: parentRow.children,
+        label: '' // Empty label for the table row
+      };
+      
+      // Insert child table right after the parent
+      newRowData.splice(parentIndex + 1, 0, childTableRow);
+    }
+    
+    this.rowData = [...newRowData]; // Create new array to trigger change detection
+    console.log('Updated rowData:', this.rowData);
+  }
+
+  private createNestedGrid(gridId: string, children: any[]): void {
+    // Wait for the DOM element to be available
+    const checkElement = () => {
+      const eGridDiv = document.getElementById(gridId);
+      if (eGridDiv) {
+        // Destroy existing grid if it exists
+        if (this.nestedGrids.has(gridId)) {
+          this.nestedGrids.get(gridId)?.destroy();
+        }
+
+        // Define column definitions for the nested grid
+        const nestedColumnDefs = [
+          { 
+            field: 'name', 
+            headerName: 'Name', 
+            flex: 1,
+            minWidth: 120
+          },
+          { 
+            field: 'type', 
+            headerName: 'Type', 
+            width: 100
+          },
+          {
+            headerName: 'Action',
+            width: 100,
+            cellRenderer: (params: any) => {
+              return `<button 
+                        style="
+                          background-color: #007bff; 
+                          color: white; 
+                          border: none; 
+                          padding: 4px 8px; 
+                          border-radius: 4px; 
+                          cursor: pointer; 
+                          font-size: 12px;
+                        " 
+                        onclick="window.handleNestedGridAction('${params.data.name}', '${params.data.type}')"
+                      >
+                        Action
+                      </button>`;
+            }
+          }
+        ];
+
+        // Grid options for the nested grid
+        const nestedGridOptions: GridOptions = {
+          theme: 'legacy',
+          columnDefs: nestedColumnDefs,
+          rowData: children,
+          headerHeight: 35,
+          rowHeight: 40,
+          suppressHorizontalScroll: false,
+          domLayout: 'autoHeight', // Auto-size the grid to fit content
+          defaultColDef: {
+            resizable: true,
+            sortable: true
+          }
+        };
+
+        // Create the nested grid
+        const gridApi = createGrid(eGridDiv, nestedGridOptions);
+        this.nestedGrids.set(gridId, gridApi);
+      } else {
+        // Retry if element not found yet
+        setTimeout(checkElement, 10);
+      }
+    };
+    
+    checkElement();
+  }
+
+  ngOnDestroy(): void {
+    // Clean up nested grids
+    this.nestedGrids.forEach((gridApi) => {
+      gridApi.destroy();
+    });
+    this.nestedGrids.clear();
+  }
+
+  handleNestedGridAction(name: string, type: string): void {
+    console.log('Nested grid action clicked:', { name, type });
+    // You can add your custom action logic here
+    alert(`Action clicked for: ${name} (${type})`);
   }
 }
