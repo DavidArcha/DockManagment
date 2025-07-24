@@ -36,7 +36,7 @@ export class MultilevelGridComponent implements OnInit, OnChanges, OnDestroy {
             this.createNestedGrid(gridId, params.data.children);
           }, 0);
           
-          return `<div id="${gridId}" style="margin-left: 10px; padding: 5px; width: calc(100% - 20px); max-width: 800px;"></div>`;
+          return `<div id="${gridId}" style="margin-left: 10px; padding: 5px; width: calc(100% - 20px); max-width: 800px; height: 300px;"></div>`;
         }
         return '';
       }
@@ -46,16 +46,18 @@ export class MultilevelGridComponent implements OnInit, OnChanges, OnDestroy {
   gridOptions: any = {
     theme: 'legacy',
     pagination: true,
-    paginationPageSize: 10,
+    paginationPageSize: 5, // Smaller page size to see pagination better
+    paginationPageSizeSelector: [5, 10, 20], // Page size options
     suppressRowClickSelection: true,
-    headerHeight: 0,
+    headerHeight: 0, // Keep headers hidden for parent grid
+    suppressPaginationPanel: false, // Ensure pagination panel is visible
+    paginationAutoPageSize: false, // Use our custom page sizes
     getRowHeight: (params: any) => {
       if (params.data.isParent) {
         return 40; // Parent row height
       } else if (params.data.isChildTable) {
-        // Calculate height based on number of children + headers + padding
-        const childCount = params.data.children ? params.data.children.length : 0;
-        return Math.max(120, 50 + (childCount * 40) + 35); // Base height + children rows + header
+        // Fixed height for nested grid with pagination
+        return 320; // Height to accommodate nested grid + pagination panel
       }
       return 50; // Default height
     },
@@ -193,7 +195,12 @@ export class MultilevelGridComponent implements OnInit, OnChanges, OnDestroy {
           headerHeight: 35,
           rowHeight: 40,
           suppressHorizontalScroll: false,
-          domLayout: 'autoHeight', // Auto-size the grid to fit content
+          domLayout: 'normal', // Changed from autoHeight to normal for pagination
+          pagination: true, // Enable pagination for nested grid
+          paginationPageSize: 3, // Smaller page size for nested grid
+          paginationPageSizeSelector: [3, 5, 10], // Page size options for nested grid
+          suppressPaginationPanel: false, // Show pagination panel
+          paginationAutoPageSize: false, // Use custom page sizes
           defaultColDef: {
             resizable: true,
             sortable: true

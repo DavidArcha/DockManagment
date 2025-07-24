@@ -1,0 +1,70 @@
+// Ensure pagination panel is visible and properly styled
+.ag-theme-alpine {
+  .ag-paging-panel {
+    border-top: 1px solid #ddd;
+    background-color: #f8f9fa;
+    padding: 10px;
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    min-height: 50px;
+  }
+
+  .ag-paging-page-summary-panel {
+    display: flex !important;
+    align-items: center;
+    margin-right: 20px;
+  }
+
+  .ag-paging-button {
+    margin: 0 5px;
+    padding: 5px 10px;
+    border: 1px solid #007bff;
+    background-color: white;
+    color: #007bff;
+    border-radius: 4px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #007bff;
+      color: white;
+    }
+
+    &.ag-disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .ag-paging-row-summary-panel {
+    margin-left: 20px;
+    font-weight: bold;
+  }
+}
+
+// Nested grid specific styling
+div[id^="nested-grid-"] {
+  .ag-theme-alpine {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    
+    .ag-paging-panel {
+      background-color: #e9ecef;
+      border-top: 1px solid #ccc;
+      padding: 8px;
+      min-height: 40px;
+      font-size: 12px;
+    }
+
+    .ag-paging-button {
+      padding: 3px 6px;
+      font-size: 11px;
+      margin: 0 3px;
+    }
+
+    .ag-paging-page-summary-panel,
+    .ag-paging-row-summary-panel {
+      font-size: 11px;
+    }
+  }
+}
