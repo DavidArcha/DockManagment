@@ -1,16 +1,13 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
+  selector: 'app-grid-demo',
   standalone: false,
-  styleUrl: './app.component.scss'
+  templateUrl: './grid-demo.component.html',
+  styleUrl: './grid-demo.component.scss'
 })
-export class AppComponent {
-  title = 'your-project-name';
-
-  // Sample data to pass to the multilevel grid component
-  multiGridData = [
+export class GridDemoComponent {
+  myGridData = [
     {
       "children": [
         {
@@ -25,7 +22,7 @@ export class AppComponent {
         }
       ],
       "id": 1,
-      "label": "Multigrid Example 1"
+      "label": "1-12-2024"
     },
     {
       "children": [
@@ -41,7 +38,7 @@ export class AppComponent {
         }
       ],
       "id": 2,
-      "label": "Multigrid Example 2"
+      "label": "1-10-2024"
     },
     {
       "children": [
@@ -57,7 +54,7 @@ export class AppComponent {
         }
       ],
       "id": 3,
-      "label": "Multigrid Example 3"
+      "label": "1-8-2024"
     }
   ];
 }
