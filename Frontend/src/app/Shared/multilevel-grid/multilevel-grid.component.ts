@@ -20,7 +20,7 @@ export class MultilevelGridComponent implements OnInit, OnChanges, OnDestroy {
   columnDefs = [
     { 
       field: 'label', 
-      headerName: '', 
+      headerName: 'Date', // Add "Date" as header name
       flex: 1,
       cellRenderer: (params: any) => {
         if (params.data.isParent) {
@@ -55,8 +55,7 @@ export class MultilevelGridComponent implements OnInit, OnChanges, OnDestroy {
     pagination: true,
     paginationPageSize: 5, // Smaller page size to see pagination better
     paginationPageSizeSelector: [5, 10, 20], // Page size options
-    suppressRowClickSelection: true,
-    headerHeight: 0, // Keep headers hidden for parent grid
+    headerHeight: 40, // Show header with proper height
     suppressPaginationPanel: false, // Ensure pagination panel is visible
     paginationAutoPageSize: false, // Use our custom page sizes
     getRowHeight: (params: any) => {
