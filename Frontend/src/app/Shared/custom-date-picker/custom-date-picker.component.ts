@@ -115,6 +115,9 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   timeFormatOption: '12hr' | '24hr' = '24hr';
   showTimeOption = false;
   enableFormatChange = false;
+  formatMismatchDetected = false;
+  detectedFormat = '';
+  originalDateString = '';
 
   // Use Angular's renderer for better testability and SSR compatibility
   constructor(
@@ -132,7 +135,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   ngOnInit() {
     this.setInitialDate(this.initialDate);
     this.inputSubscription = this.inputControl.valueChanges.subscribe(v => this.onInputChange(v || ''));
-    // Only build calendar when necessary
     if (this.isOpen) {
       this.buildCalendar();
     }
@@ -146,13 +148,12 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       this.buildCalendar();
     }
     if ('minDate' in changes || 'maxDate' in changes || 'restrictFutureDates' in changes) {
-      this._years = null; // Reset years cache
+      this._years = null;
     }
   }
 
   ngOnDestroy() {
     this.removeGlobalClickListener();
-    // Explicitly unsubscribe from any subscriptions
     if (this.inputSubscription) {
       this.inputSubscription.unsubscribe();
     }
@@ -190,13 +191,11 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
           this.closePopup();
           break;
         case 'Tab':
-          // Handle focus trapping
           break;
         case 'ArrowLeft':
         case 'ArrowRight':
         case 'ArrowUp':
         case 'ArrowDown':
-          // Implement keyboard navigation
           e.preventDefault();
           this.navigateCalendar(e.key);
           break;
@@ -206,14 +205,13 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
 
   // Add a new method to handle keyboard navigation
   navigateCalendar(direction: string) {
-    // Implementation for keyboard navigation
     this.cdr.markForCheck();
   }
 
   // Add/Remove document click
   addGlobalClickListener() {
     if (this.globalClickUnlistener) {
-      return; // Already listening
+      return;
     }
 
     this.globalClickUnlistener = this.renderer.listen('document', 'mousedown', (e: Event) => {
@@ -238,17 +236,10 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
-  // Add these new properties and methods to your component
-  formatMismatchDetected = false;
-  detectedFormat = '';
-  originalDateString = '';
 
   // Add this new method to detect the format of a date string
   detectDateFormat(dateStr: string): string {
-    // Remove any time portion for simpler detection
     const datePart = dateStr.split(' ')[0];
-
-    // Check for common separators
     const separator = datePart.includes('-') ? '-' :
       datePart.includes('/') ? '/' :
         datePart.includes('.') ? '.' :
@@ -281,7 +272,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       }
     }
 
-    // If no clear pattern, return empty
     return '';
   }
 
@@ -298,24 +288,20 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       return;
     }
 
-    // Handle string dates with potential format issues
     if (typeof value === 'string') {
       this.originalDateString = value;
       const parsedDate = this.parseDate(value);
 
       if (!parsedDate) {
-        // Try to detect format if parsing failed
         this.detectedFormat = this.detectDateFormat(value);
 
         if (this.detectedFormat && this.detectedFormat !== this.dateFormat) {
           this.formatMismatchDetected = true;
 
-          // Try to parse with the detected format
           const date = this.parseWithFormat(value, this.detectedFormat);
           if (date) {
-            // Show the date anyway but keep the error
             this.selected = date;
-            this.displayValue = value; // Keep original string for display
+            this.displayValue = value;
             this.errorMsg = `Format mismatch: Current format is "${this.detectedFormat}". Expected format: "${this.dateFormat}"`;
           } else {
             this.errorMsg = `Invalid date format. Expected: "${this.dateFormat}"`;
@@ -324,7 +310,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
           this.errorMsg = this.customErrorMessage || 'Invalid date format';
         }
       } else {
-        // Parsing succeeded
         if (this.isDateEnabled(parsedDate)) {
           this.selected = parsedDate;
           this.displayValue = this.formatDate(parsedDate);
@@ -338,11 +323,9 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
         }
       }
     } else if (this.enableDateRangeSelection && typeof value === 'object' && 'from' in value && value.from) {
-      // Existing code for DateRange
       this.selected = { from: new Date(value.from), to: value.to ? new Date(value.to) : null };
       this.displayValue = this.formatDateRange(this.selected as DateRange);
     } else if (value instanceof Date) {
-      // Existing code for Date object
       if (this.isDateEnabled(value)) {
         this.selected = new Date(value);
         this.displayValue = this.formatDate(this.selected);
@@ -382,13 +365,12 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
         month = parseInt(parts[0]) - 1;
         day = parseInt(parts[1]);
         year = parseInt(parts[2]);
-      } else { // dd-mm-yyyy
+      } else {
         day = parseInt(parts[0]);
         month = parseInt(parts[1]) - 1;
         year = parseInt(parts[2]);
       }
 
-      // Basic validation
       if (month < 0 || month > 11) return null;
       if (day < 1 || day > new Date(year, month + 1, 0).getDate()) return null;
 
@@ -403,7 +385,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     if (this.selected && this.formatMismatchDetected) {
       this.formatMismatchDetected = false;
 
-      // Fix: Properly handle DateRange vs Date
       if (this.enableDateRangeSelection && this.selected && typeof this.selected === 'object' && 'from' in this.selected) {
         this.displayValue = this.formatDateRange(this.selected as DateRange);
       } else if (this.selected instanceof Date) {
@@ -429,7 +410,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     this.viewYear = d.getFullYear();
   }
 
-  // Efficient date helpers
   private createDate(year: number, month: number, day: number): Date {
     const date = new Date(0);
     date.setFullYear(year, month, day);
@@ -439,12 +419,9 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   // Reuse date objects in cache
   buildCalendar() {
     this.ngZone.runOutsideAngular(() => {
-      // Perform expensive calculations outside Angular's change detection
-      // If the calendar is already built for this month/year, reuse it
       if (this.cachedMonth === this.viewMonth &&
         this.cachedYear === this.viewYear &&
         this.cachedWeeks.length > 0) {
-        // Instead of returning, just update the display properties
         this.calendarWeeks = this.cachedWeeks.map(week =>
           week.map(day => ({
             ...day,
@@ -453,7 +430,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
             isInRange: this.isInRange(day.date)
           }))
         );
-        // Mark for check inside the zone
         this.ngZone.run(() => {
           this.cdr.markForCheck();
         });
@@ -462,35 +438,22 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
 
       const weeks: any[][] = [];
 
-      // Create a date for the first day of the current viewing month
       const firstOfMonth = new Date(this.viewYear, this.viewMonth, 1);
-
-      // Get the day of the week for the first day (0 = Sunday, 1 = Monday, etc.)
       const firstDayOfWeek = firstOfMonth.getDay();
-
-      // Calculate how many days to show from the previous month
       const daysFromPrevMonth = firstDayOfWeek;
-
-      // Start from the first cell date (could be from previous month)
       const startDate = new Date(this.viewYear, this.viewMonth, 1 - daysFromPrevMonth);
 
       for (let w = 0; w < 6; w++) {
         const week: any[] = [];
         for (let d = 0; d < 7; d++) {
-          // CREATE DATE CORRECTLY: Use a clean new Date object for each cell
           const dayOffset = w * 7 + d;
-
-          // Create a completely fresh date for each cell
           const tempDate = new Date(startDate);
           tempDate.setDate(startDate.getDate() + dayOffset);
-          // Create a fresh date to avoid mutation issues
           const currentCellDate = this.createDate(
             tempDate.getFullYear(),
             tempDate.getMonth(),
             tempDate.getDate()
           );
-
-          // Check if this date belongs to current viewing month
           const isOtherMonth = currentCellDate.getMonth() !== this.viewMonth;
 
           week.push({
@@ -510,7 +473,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       this.cachedMonth = this.viewMonth;
       this.cachedYear = this.viewYear;
       this.cachedWeeks = weeks;
-      // Mark for check inside the zone
       this.ngZone.run(() => {
         this.cdr.markForCheck();
       });
@@ -537,17 +499,13 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     this.buildCalendar();
   }
   changeMonth(m: number) {
-    // Convert the value to a number explicitly (dropdown might return string)
     this.viewMonth = parseInt(m.toString(), 10);
-
-    // Fix: Use numeric values in comparisons
     if (this.viewMonth === 11 && m === 0) {
       this.viewYear--;
     } else if (this.viewMonth === 0 && m === 11) {
       this.viewYear++;
     }
 
-    // Rebuild the calendar with the new month
     this.buildCalendar();
   }
   changeYear(y: number) {
@@ -586,8 +544,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       this.displayValue = this.formatDate(d);
       this.inputControl.setValue(this.displayValue, { emitEvent: false });
       this.selectedDate.emit(this.getSelectedDateForEmit());
-      this.formattedDateStr.emit(this.displayValue); // Add this line
-      console.log('Selected date (formatted):', this.displayValue); // Add console log
+      this.formattedDateStr.emit(this.displayValue);
       if (this.closeOnSelect) this.closePopup();
     }
     this.buildCalendar();
@@ -600,8 +557,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       this.displayValue = this.formatDate(this.selected);
       this.inputControl.setValue(this.displayValue, { emitEvent: false });
       this.selectedDate.emit(this.getSelectedDateForEmit());
-      this.formattedDateStr.emit(this.displayValue); // Add this line
-      console.log('Selected date with time (formatted):', this.displayValue); // Add console log
+      this.formattedDateStr.emit(this.displayValue);
     }
   }
 
@@ -620,8 +576,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       this.displayValue = this.formatDate(now);
       this.inputControl.setValue(this.displayValue, { emitEvent: false });
       this.selectedDate.emit(this.getSelectedDateForEmit());
-      this.formattedDateStr.emit(this.displayValue); // Add this line
-      console.log('Today selected (formatted):', this.displayValue); // Add console log
+      this.formattedDateStr.emit(this.displayValue);
     }
     this.closePopup();
     this.buildCalendar();
@@ -658,7 +613,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     const format = this.dateFormat.toLowerCase();
 
     if (format.includes('mmmm')) {
-      // Full month name formats
       if (format.startsWith('mmmm')) {
         // Month first
         if (format.includes(' ')) {
@@ -725,10 +679,12 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
 
     return str;
   }
+
   formatDateRange(range: DateRange): string {
     if (!range.from || !range.to) return '';
     return `${this.formatDate(range.from)} to ${this.formatDate(range.to)}`;
   }
+
   // Enhanced parseDate method to handle all formats
   parseDate(val: string | Date): Date | null {
     try {
@@ -741,7 +697,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
         ['januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember'] :
         ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
 
-      // Extract time portion if present
       let timePortion = '';
       let datePortion = val;
 
@@ -753,24 +708,19 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
 
       let day: number, month: number, year: number;
 
-      // Handle text month formats
       if (format.includes('mmmm') || format.includes('mmm')) {
-        // Determine separator
+
         const separator = format.includes('-') ? '-' : format.includes('/') ? '/' : format.includes('.') ? '.' : ' ';
         const parts = datePortion.split(separator);
 
         if (parts.length !== 3) return null;
-
-        // Check if month is first or second part
         const isMonthFirst = format.startsWith('mmm');
         const monthText = isMonthFirst ? parts[0].toLowerCase() : parts[1].toLowerCase();
         const dayText = isMonthFirst ? parts[1] : parts[0];
         const yearText = parts[2];
 
-        // Try to match with short month names first
         let monthIndex = shortMonths.findIndex(m => monthText.startsWith(m));
 
-        // If not found, try full month names
         if (monthIndex === -1) {
           monthIndex = fullMonths.findIndex(m => monthText.startsWith(m.substring(0, 3)));
         }
@@ -782,7 +732,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
         year = parseInt(yearText, 10);
 
         if (year < 100) {
-          // Handle 2-digit years
           const currentYear = new Date().getFullYear();
           const century = Math.floor(currentYear / 100) * 100;
           year = year + century;
@@ -863,7 +812,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   isDateEnabled(d: Date): boolean {
-    // Add null/undefined check at the beginning
     if (!d || !(d instanceof Date) || isNaN(d.getTime())) {
       return false;
     }
@@ -889,18 +837,17 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
     }
     return false;
   }
-  // Fix for isInRange method
+
   isInRange(d: Date): boolean {
     if (this.enableDateRangeSelection && this.selected && typeof this.selected === 'object' && 'from' in this.selected && this.selected.to) {
       let { from, to } = this.selected as DateRange;
       return to ? d >= this.stripTime(from) && d <= this.stripTime(to) : false;
     }
-    return false; // Always return a boolean
+    return false;
   }
   stripTime(d: Date): Date {
-    // Add null/undefined check and ensure d is a Date object
     if (!d || !(d instanceof Date) || isNaN(d.getTime())) {
-      return new Date(); // Return current date as fallback
+      return new Date();
     }
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
@@ -916,7 +863,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
       this.selectedDate.emit(null);
       return;
     }
-    // Parse for date/range
     let valid = false;
     if (this.enableDateRangeSelection && value.includes('to')) {
       let [start, end] = value.split('to').map(v => v.trim());
@@ -953,7 +899,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   getPlaceholder(): string {
     const format = this.dateFormat.toLowerCase();
 
-    // Handle text month formats
     if (format.includes('mmmm')) {
       if (format.startsWith('mmmm')) {
         return format.includes(' ') ? 'Month Day Year' : 'Month-Day-Year';
@@ -967,7 +912,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
         return format.includes(' ') ? 'Day Mon Year' : 'Day-Mon-Year';
       }
     } else {
-      // Handle numeric formats
       const separator = format.includes('-') ? '-' : format.includes('/') ? '/' : format.includes('.') ? '.' : '-';
       const yearPlaceholder = format.includes('yyyy') ? '____' : '__';
 
@@ -1035,8 +979,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   // Add this new method to handle the string to literal type conversion
   setDateFormatFromString(formatStr: string) {
     if (this.availableDateFormats.includes(formatStr)) {
-      // We need to handle the new formats like dd-mmm-yyyy
-      this.dateFormat = formatStr as any; // Using 'any' here as we're expanding beyond the original types
+      this.dateFormat = formatStr as any;
       if (this.selected) {
         if (this.enableDateRangeSelection && this.selected && typeof this.selected === 'object' && 'from' in this.selected) {
           this.displayValue = this.formatDateRange(this.selected as DateRange);
@@ -1132,10 +1075,7 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
 
   toggleFormatChange() {
     if (!this.enableFormatChange) {
-      // Reset to default format when unchecked
       this.dateFormat = 'dd-mm-yyyy';
-
-      // Update display if a date is selected
       if (this.selected instanceof Date) {
         this.displayValue = this.formatDate(this.selected);
         this.inputControl.setValue(this.displayValue, { emitEvent: false });
@@ -1146,8 +1086,6 @@ export class CustomDatePickerComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   // Add this method to the CustomDatePickerComponent class
-
-  // Format date for tooltip in long format (e.g., 14-July-2025)
   formatDateForTooltip(date: Date | null): string {
     if (!date) return '';
 
