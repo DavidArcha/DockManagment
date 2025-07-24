@@ -26,7 +26,14 @@ export class MultilevelGridComponent implements OnInit, OnChanges, OnDestroy {
         if (params.data.isParent) {
           const expanded = params.data.expanded || false;
           const arrow = expanded ? '▼' : '▶';
-          return `<span style="cursor: pointer; user-select: none; font-weight: bold; font-size: 14px;">${arrow} ${params.data.label}</span>`;
+          return `<div style="display: flex; align-items: center; height: 100%; width: 100%; position: relative;">
+                    <span style="cursor: pointer; user-select: none; font-size: 14px; position: absolute; left: 10px;">
+                      ${arrow}
+                    </span>
+                    <span style="cursor: pointer; user-select: none; font-weight: bold; font-size: 14px; width: 100%; text-align: center;">
+                      ${params.data.label}
+                    </span>
+                  </div>`;
         } else if (params.data.isChildTable) {
           // Create a unique ID for this nested grid
           const gridId = `nested-grid-${params.data.parentId}`;
