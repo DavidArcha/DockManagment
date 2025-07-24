@@ -1,5 +1,42 @@
 // Ensure pagination panel is visible and properly styled
 .ag-theme-alpine {
+  // Header styling for master grid
+  .ag-header-cell {
+    background-color: #007bff !important;
+    color: white !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    font-size: 16px !important;
+    border-bottom: 2px solid #0056b3 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    .ag-header-cell-label {
+      justify-content: center !important;
+      width: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      text-align: center !important;
+      
+      .ag-header-cell-text {
+        text-align: center !important;
+        width: 100% !important;
+        display: block !important;
+      }
+      
+      // Override any sort icons or other elements
+      .ag-header-icon {
+        display: none !important;
+      }
+    }
+    
+    // Override any other header content
+    * {
+      text-align: center !important;
+    }
+  }
+
   .ag-paging-panel {
     border-top: 1px solid #ddd;
     background-color: #f8f9fa;
